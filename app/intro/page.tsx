@@ -12,6 +12,8 @@ export default function IntroPage() {
   const [playerName, setPlayerName] = useState("User");
   const [isFogging, setIsFogging] = useState(false);
 
+  const [targetRoute, setTargetRoute] = useState("/level/1");
+
   const currentData = introSteps[stepIndex];
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function IntroPage() {
 
   const handleNext = () => {
     if (stepIndex === introSteps.length - 1) {
-      router.push("/level/1");
+      router.push(targetRoute); // Gunakan targetRoute dinamis, bukan hardcode "/level/1"
       return;
     }
 
@@ -65,19 +67,19 @@ export default function IntroPage() {
             {formatText(currentData.textTop)}
           </p>
           
-          <div className="flex items-end gap-4">
+          <div className={`flex ${currentData.itemsContainerClass} gap-4`}>
             <p className="flex-1 text-sm font-bold leading-relaxed">
                 {formatText(currentData.textBottom)}
             </p>
             
             {/* WADAH DIPERBESAR: w-24 menjadi w-32 atau w-40 */}
-            <div className="relative flex-shrink-0 w-32 h-40 sm:w-40 sm:h-48">
+            <div className="relative flex-shrink-0 w-32 h-40 sm:w-40 sm:h-48 mb-8">
                 <Image 
                 src={currentData.intanPose} 
                 alt="Intan" 
                 fill 
                 // HAPUS scale, gunakan object-contain dan object-bottom/object-top
-                className="object-contain object-top" 
+                className={`object-contain ${currentData.imageScale}`} 
                 />
             </div>
             </div>
@@ -91,7 +93,7 @@ export default function IntroPage() {
              </div>
           ) : (
              <div className="relative w-full max-w-[280px]"> 
-               <InteractiveMap /> 
+               <InteractiveMap onSelectRoute={(route) => setTargetRoute(route)} /> 
              </div>
           )}
         </div>

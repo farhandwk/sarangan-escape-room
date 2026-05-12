@@ -53,10 +53,18 @@ const mapLevels = [
   }
 ];
 
-export default function InteractiveMap() {
+interface InteractiveMapProps {
+  onSelectRoute?: (route: string) => void;
+}
+
+export default function InteractiveMap({ onSelectRoute }: InteractiveMapProps) {
   const router = useRouter();
-  // State sekarang menyimpan number
-  const [activeLevel, setActiveLevel] = useState<number | null>(null);
+ // Pisahkan state hover dan click agar yang diklik tetap menyala (sticky)
+  const [hoveredLevel, setHoveredLevel] = useState<number | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+
+  // Level yang aktif adalah yang sedang di-hover, atau fallback ke yang sedang dipilih
+  const activeLevel = hoveredLevel !== null ? hoveredLevel : selectedLevel;
 
   return (
     <div className="relative w-full max-w-md mx-auto flex flex-col items-center">
@@ -81,6 +89,7 @@ export default function InteractiveMap() {
         {mapLevels.map((level) => {
           const isBlank = level.id === 0;
           const isActive = activeLevel === level.id;
+          const isSelected = selectedLevel === level.id;
 
           return (
             // Gunakan tag <g> (group) untuk membungkus path dan text
@@ -88,20 +97,24 @@ export default function InteractiveMap() {
               <path
                 d={level.pathD}
                 onClick={() => {
-                  if (!isBlank) setActiveLevel(level.id);
+                  if (!isBlank) {
+                    setSelectedLevel(level.id); // Buat sticky
+                    if (onSelectRoute) {
+                      onSelectRoute(level.route); // Kirim rute ke IntroPage
+                    }
+                  }
                 }}
                 onMouseEnter={() => {
-                  if (!isBlank) setActiveLevel(level.id);
+                  if (!isBlank) setHoveredLevel(level.id);
                 }}
                 onMouseLeave={() => {
-                  if (!isBlank) setActiveLevel(null);
+                  if (!isBlank) setHoveredLevel(null);
                 }}
                 className={`
                   transition-all duration-300
                   ${isBlank 
-                    // pointer-events-none secara mutlak mematikan hover/klik pada blank spot
                     ? "fill-[#D8B4E2] stroke-white stroke-2 opacity-60 pointer-events-none" 
-                    : isActive 
+                    : isActive || isSelected // Menyala jika di-hover ATAU sedang dipilih
                       ? "cursor-pointer fill-[#5A189A] stroke-[#FFB703] stroke-[4px] drop-shadow-[0_0_15px_rgba(255,183,3,0.8)]" 
                       : "cursor-pointer fill-[#D8B4E2] stroke-white stroke-2 opacity-80 hover:opacity-100"
                   }
