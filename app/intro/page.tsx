@@ -74,7 +74,7 @@ export default function IntroPage() {
             </p>
             
             {/* WADAH DIPERBESAR: w-24 menjadi w-32 atau w-40 */}
-            <div className={`relative flex-shrink-0 w-32 sm:w-80 h-80 ${currentData.imgCustomClass}`}>
+            <div className={`relative flex-shrink-0 w-32 h-64 ${currentData.imgCustomClass}`}>
                 <Image 
                 src={currentData.intanPose} 
                 alt="Intan" 
