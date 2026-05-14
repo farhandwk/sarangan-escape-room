@@ -67,19 +67,21 @@ export default function IntroPage() {
             {formatText(currentData.textTop)}
           </p>
           
-          <div className={`flex ${currentData.itemsContainerClass} gap-4`}>
+          {/* <div className={`flex ${currentData.itemsContainerClass} gap-4`}> */}
+          <div className={`flex items-start gap-4`}>
             <p className="flex-1 text-sm font-bold leading-relaxed">
                 {formatText(currentData.textBottom)}
             </p>
             
             {/* WADAH DIPERBESAR: w-24 menjadi w-32 atau w-40 */}
-            <div className="relative flex-shrink-0 w-32 h-40 sm:w-40 sm:h-48 mb-8">
+            <div className={`relative flex-shrink-0 w-32 sm:w-80 h-80 ${currentData.imgCustomClass}`}>
                 <Image 
                 src={currentData.intanPose} 
                 alt="Intan" 
                 fill 
                 // HAPUS scale, gunakan object-contain dan object-bottom/object-top
-                className={`object-contain ${currentData.imageScale}`} 
+                // className={`object-contain ${currentData.imageScale}`} 
+                className="object-contain"
                 />
             </div>
             </div>

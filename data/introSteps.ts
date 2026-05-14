@@ -5,8 +5,7 @@ export type IntroStep = {
   intanPose: string; // path gambar
   bottomComponent: "scroll" | "map";
   buttonText: string;
-  itemsContainerClass: string;
-  imageScale: string;
+  imgCustomClass: string;
 };
 
 export const introSteps: IntroStep[] = [
@@ -17,8 +16,7 @@ export const introSteps: IntroStep[] = [
     intanPose: "/src/girlPoses/cewek_lambai_nobg_edited.png", // Sesuaikan nama file nanti
     bottomComponent: "scroll",
     buttonText: "BUKA",
-    itemsContainerClass: "items-end",
-    imageScale: "scale-125"
+    imgCustomClass: ""
   },
   {
     id: 2,
@@ -27,8 +25,7 @@ export const introSteps: IntroStep[] = [
     intanPose: "/src/girlPoses/cewek_khawatir_nobg.png",
     bottomComponent: "scroll",
     buttonText: "YAA... ITU SAYA",
-    itemsContainerClass: "items-start",
-    imageScale: "scale-175"
+    imgCustomClass: ""
   },
   {
     id: 3,
@@ -37,8 +34,7 @@ export const introSteps: IntroStep[] = [
     intanPose: "/src/girlPoses/cewek_heroic_nobg.png",
     bottomComponent: "map",
     buttonText: "GASS..",
-    itemsContainerClass: "items-end",
-    imageScale: "scale-175"
+    imgCustomClass: ""
   },
   {
     id: 4,
@@ -47,7 +43,6 @@ export const introSteps: IntroStep[] = [
     intanPose: "/src/girlPoses/cewek_nantang_nobg.png",
     bottomComponent: "map",
     buttonText: "MULAI PETUALANGAN",
-    itemsContainerClass: "items-start",
-    imageScale: "scale-140"
+    imgCustomClass: "left-[0%] max-w-none w-48"
   }
 ];
