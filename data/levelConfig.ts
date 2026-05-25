@@ -63,7 +63,7 @@ export const levelConfig: Record<string, LevelData> = {
     // Data spesifik yang akan dilempar ke komponen MemoryGame
     gameData: {
       pairsToFind: 3,
-      cards: ["ha", "na", "ca"] 
+      cards: ["ꦲ", "ꦤ", "ꦕ"] 
     }
   },
 };

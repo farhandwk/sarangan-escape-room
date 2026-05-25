@@ -124,42 +124,100 @@ export default function MemoryGame({ data, onResult, onComplete }: MemoryGamePro
     setFlippedIndices((prev) => [...prev, index]);
   };
 
+  // return (
+  //   <div className="w-full h-full flex flex-col items-center justify-center p-4">
+  //     {/* GRID KARTU (Visualisasi 3D Flip) */}
+  //     <div className="grid grid-cols-4 gap-4 max-w-2xl mx-auto perspective-1000">
+  //       {cards.map((card, index) => (
+  //         <button
+  //           key={card.id}
+  //           onClick={() => handleCardClick(index)}
+  //           // Kartu yang sudah matched akan sedikit memudar dan tidak bisa diklik
+  //           className={`relative w-20 h-28 sm:w-28 sm:h-40 cursor-pointer outline-none transition-opacity duration-500 ${
+  //             card.isMatched ? "opacity-60 cursor-default" : "hover:-translate-y-2"
+  //           } [perspective:1000px]`}
+  //           style={{ transition: "transform 0.2s ease-out" }}
+  //         >
+  //           {/* Inner Container untuk efek 3D Rotate */}
+  //           <div 
+  //             className="w-full h-full duration-500 [transform-style:preserve-3d] shadow-lg rounded-xl"
+  //             style={{ transform: card.isFlipped || card.isMatched ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+  //           >
+              
+  //             {/* SISI DEPAN (Tertutup / Cover Batik) */}
+  //             <div className="absolute inset-0 w-full h-full rounded-xl border-2 border-[#FFB703]/50 bg-[#5A189A] flex items-center justify-center [backface-visibility:hidden] overflow-hidden">
+  //                {/* TODO: Ganti src ini dengan gambar cover batik Anda di folder public */}
+  //                {/* <Image src="/cover_kartu_batik.png" alt="Card Back" fill className="object-cover" /> */}
+  //                <span className="text-white/30 text-xs">Batikan</span>
+  //             </div>
+
+  //             {/* SISI BELAKANG (Terbuka / Aksara Jawa) */}
+  //             <div className="absolute inset-0 w-full h-full rounded-xl border-4 border-[#5A189A] bg-[#EDF2F4] flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden">
+  //                {/* TODO: Integrasikan gambar Aksara Anda di sini */}
+  //                {/* <Image src={`/aksara/${card.value}.png`} alt={card.value} fill className="object-contain p-2" /> */}
+                 
+  //                {/* Teks placeholder sementara */}
+  //                <span className="text-3xl font-black text-[#5A189A] capitalize">
+  //                  {card.value}
+  //                </span>
+  //             </div>
+
+  //           </div>
+  //         </button>
+  //       ))}
+  //     </div>
+  //   </div>
+  // );
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-4">
-      {/* GRID KARTU (Visualisasi 3D Flip) */}
-      <div className="grid grid-cols-4 gap-4 max-w-2xl mx-auto perspective-1000">
+      
+      {/* GRID KARTU (Responsive Grid) */}
+      {/* - grid-cols-3: Di layar HP (landscape sempit), kartu jadi 3 kolom agar tidak terlalu kecil.
+        - sm:grid-cols-4: Di tablet/desktop, kartu jadi 4 kolom agar lebih seimbang.
+        - gap-3 sm:gap-4: Jarak antar kartu lebih rapat di HP, renggang di desktop.
+      */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-6 max-w-3xl w-full mx-auto perspective-1000 items-center justify-items-center">
+        
         {cards.map((card, index) => (
           <button
             key={card.id}
             onClick={() => handleCardClick(index)}
-            // Kartu yang sudah matched akan sedikit memudar dan tidak bisa diklik
-            className={`relative w-20 h-28 sm:w-28 sm:h-40 cursor-pointer outline-none transition-opacity duration-500 ${
+            // PERBAIKAN UKURAN: Menggunakan aspect-ratio agar proporsinya selalu terjaga (seperti kartu remi sungguhan)
+            // w-full max-w-[100px] akan membuat kartu menyesuaikan kolom grid, tapi tidak lebih dari 100px lebarnya
+            className={`relative w-full aspect-[2.5/3.5] max-w-[90px] sm:max-w-[120px] cursor-pointer outline-none transition-opacity duration-500 ${
               card.isMatched ? "opacity-60 cursor-default" : "hover:-translate-y-2"
             } [perspective:1000px]`}
             style={{ transition: "transform 0.2s ease-out" }}
           >
-            {/* Inner Container untuk efek 3D Rotate */}
             <div 
-              className="w-full h-full duration-500 [transform-style:preserve-3d] shadow-lg rounded-xl"
+              className="w-full h-full duration-500 [transform-style:preserve-3d] shadow-2xl rounded-xl"
               style={{ transform: card.isFlipped || card.isMatched ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
             >
               
-              {/* SISI DEPAN (Tertutup / Cover Batik) */}
-              <div className="absolute inset-0 w-full h-full rounded-xl border-2 border-[#FFB703]/50 bg-[#5A189A] flex items-center justify-center [backface-visibility:hidden] overflow-hidden">
-                 {/* TODO: Ganti src ini dengan gambar cover batik Anda di folder public */}
-                 {/* <Image src="/cover_kartu_batik.png" alt="Card Back" fill className="object-cover" /> */}
-                 <span className="text-white/30 text-xs">Batikan</span>
+              {/* SISI DEPAN (Tertutup / Cover Batik PNG) */}
+              <div className="absolute inset-0 w-full h-full rounded-xl flex items-center justify-center [backface-visibility:hidden] overflow-hidden bg-black/20">
+                 {/* CARA MEMASUKKAN PNG: 
+                    Pastikan file 'cover_batik.png' ada di dalam folder 'public/src/' (atau sesuai struktur Anda).
+                    Gunakan <Image> dengan fill dan object-cover agar pas di dalam kotak.
+                 */}
+                 <Image 
+                    src="/src/backCard.png" // GANTI DENGAN PATH PNG BATIK ANDA
+                    alt="Card Back" 
+                    fill 
+                    className="object-contain p-1 rounded-xl border-2 border-white/20" 
+                 />
               </div>
 
               {/* SISI BELAKANG (Terbuka / Aksara Jawa) */}
-              <div className="absolute inset-0 w-full h-full rounded-xl border-4 border-[#5A189A] bg-[#EDF2F4] flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden">
-                 {/* TODO: Integrasikan gambar Aksara Anda di sini */}
-                 {/* <Image src={`/aksara/${card.value}.png`} alt={card.value} fill className="object-contain p-2" /> */}
+              <div className="absolute inset-0 w-full h-full rounded-xl border-[3px] border-[#5A189A] bg-white flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden shadow-inner">
                  
-                 {/* Teks placeholder sementara */}
-                 <span className="text-3xl font-black text-[#5A189A] capitalize">
+                 {/* Nantinya, Anda bisa mengganti teks ini dengan PNG Aksara seperti ini:
+                    <Image src={`/src/aksara/${card.value}.png`} alt={card.value} fill className="object-contain p-2" />
+                 */}
+                 <span className="text-2xl sm:text-4xl font-black text-[#5A189A] capitalize drop-shadow-sm">
                    {card.value}
                  </span>
+                 
               </div>
 
             </div>

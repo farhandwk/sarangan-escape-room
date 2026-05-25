@@ -150,7 +150,7 @@ export default function ReusableLevelPage({ params }: { params: Promise<{ id: st
     </div>
 
       {/* MAIN CONTAINER (Landscape) */}
-      <main className="relative w-screen h-[100dvh] landscape:flex lg:flex select-none">
+      <main className="relative w-screen h-[100svh] overflow-hidden bg-black flex select-none">
         
         {/* BACKGROUND */}
         <div className="absolute inset-0 z-0 pointer-events-none">
@@ -158,36 +158,42 @@ export default function ReusableLevelPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* ==========================================
-            KOLOM KIRI (SIDEBAR 35%) - SESUAI FIGMA
+            KOLOM KIRI (SIDEBAR 40%) - LAYOUT BARU
         ========================================== */}
-        {/* rounded-r-[40px] untuk melengkungkan sisi kanan saja seperti di desain */}
-        <section className={`relative z-20 w-[35%] max-w-sm h-full p-6 flex flex-col justify-between transition-all duration-500 rounded-r-[40px] shadow-[10px_0_20px_rgba(0,0,0,0.2)] ${getSidebarStyle()}`}>
+        {/* Catatan: Saya perlebar sedikit dari 35% ke 40% agar teks & gambar tidak terlalu sesak saat bersebelahan */}
+        <section className={`relative z-20 w-[40%] max-w-md h-full p-4 sm:p-6 flex flex-col justify-between transition-all duration-500 rounded-r-[40px] shadow-[10px_0_20px_rgba(0,0,0,0.2)] ${getSidebarStyle()}`}>
           
-          {/* Teks Dialog (Tanpa background tambahan) */}
-          <div className="mt-4 z-10">
-             <p className="text-[#3D2B1F] font-black text-[15px] sm:text-base leading-relaxed">
-               {activeSidebarData.text}
-             </p>
-          </div>
+          {/* AREA ATAS: Teks (Kiri) & Karakter (Kanan) */}
+          <div className="relative flex flex-row flex-1 h-full min-h-0 z-10 gap-2 sm:gap-4 mt-2">
 
-          {/* Karakter Intan & Tombol */}
-          {/* PERBAIKAN TINGGI GAMBAR: Kita gunakan flex-1 di kontainer gambar agar ia memakan seluruh sisa ruang kosong secara otomatis */}
-          <div className="relative flex flex-col flex-1 justify-end mt-2 z-10">
-            <div className="relative w-full flex-1 min-h-[150px] mb-4">
+            {/* Kiri: Teks Dialog */}
+            {/* overflow-y-auto memungkinkan teks di-scroll jika entah bagaimana teksnya luar biasa panjang */}
+            <div className="flex-1 flex items-center justify-start overflow-y-auto pb-2 pr-1">
+               <p className="text-[#3D2B1F] font-black text-[13px] sm:text-[15px] leading-snug sm:leading-relaxed">
+                 {activeSidebarData.text}
+               </p>
+            </div>
+
+            {/* Kanan: Karakter Intan */}
+            {/* w-[45%] memastikan gambar mengambil porsi kanan, sisanya untuk teks */}
+            <div className="relative w-[45%] h-full flex-shrink-0 flex items-end justify-center">
               {activeSidebarData.intanPose ? (
                 <Image
                   src={activeSidebarData.intanPose} 
-                  alt="Intan" fill 
-                  sizes="(max-width: 768px) 35vw, 300px"
+                  alt="Intan" 
+                  fill 
+                  sizes="(max-width: 768px) 25vw, 200px"
                   className="object-contain object-bottom drop-shadow-xl transition-all duration-300" 
                 />
               ) : null}
             </div>
+          </div>
 
+          {/* AREA BAWAH: Tombol */}
+          <div className="w-full pt-3 z-10 flex-shrink-0">
             <button 
               onClick={handleSidebarButton}
-              // Warna ungu gelap sesuai desain (#5A189A)
-              className="w-full bg-[#5A189A] hover:bg-[#4a1380] text-white font-black py-3 sm:py-4 rounded-2xl tracking-widest shadow-lg active:scale-95 transition-all flex-shrink-0"
+              className="w-full bg-[#5A189A] hover:bg-[#4a1380] text-white font-black py-3 sm:py-4 rounded-2xl tracking-widest shadow-lg active:scale-95 transition-all"
             >
               {!isGameStarted ? "LANJUT" : "PETUNJUK"}
             </button>
@@ -217,36 +223,53 @@ export default function ReusableLevelPage({ params }: { params: Promise<{ id: st
             Akan otomatis muncul jika state 'victoryCode' memiliki isi
         ========================================== */}
         {victoryCode && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-            <div className="bg-[#EDF2F4] rounded-[32px] p-8 shadow-2xl flex flex-col items-center max-w-sm w-full border-4 border-[#95D5B2] text-center transform transition-all scale-100">
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-300">
+            
+            {/* PERBAIKAN RESPONSIVITAS: 
+                - max-h-[95svh]: Membatasi tinggi pop-up maksimal 95% dari tinggi layar
+                - overflow-y-auto: Mengaktifkan scroll internal jika konten melebihi max-h
+                - p-5 sm:p-8: Padding lebih kecil di HP, normal di Desktop
+            */}
+            <div className="bg-[#EDF2F4] rounded-[24px] sm:rounded-[32px] p-5 sm:p-8 shadow-2xl flex flex-col items-center max-w-sm w-full border-4 border-[#95D5B2] text-center transform transition-all scale-100 max-h-[95svh] overflow-y-auto">
               
-              <div className="w-20 h-20 bg-[#D8F3DC] rounded-full flex items-center justify-center mb-4 border-4 border-[#95D5B2]">
-                 <span className="text-4xl">🎉</span>
+              {/* Ikon (Mengecil sedikit di HP) */}
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#D8F3DC] rounded-full flex-shrink-0 flex items-center justify-center mb-2 sm:mb-4 border-4 border-[#95D5B2]">
+                 <span className="text-3xl sm:text-4xl">🎉</span>
               </div>
               
-              <h2 className="text-2xl font-black text-[#5A189A] mb-2 uppercase tracking-widest">
+              <h2 className="text-xl sm:text-2xl font-black text-[#5A189A] mb-1 sm:mb-2 uppercase tracking-widest flex-shrink-0">
                 Level Selesai!
               </h2>
-              <p className="text-[#3D2B1F] font-bold mb-6 text-sm">
+              <p className="text-[#3D2B1F] font-bold mb-4 text-xs sm:text-sm flex-shrink-0">
                 Bagus sekali! Kamu berhasil menyelesaikan tantangan ini.
               </p>
 
+              {/* --- PLACEHOLDER SKOR LEVEL --- */}
+              {/* flex-shrink-0 mencegah elemen ini tergencet saat layar sempit */}
+              <div className="w-full flex justify-between items-center bg-white border-2 border-[#5A189A]/20 rounded-xl p-3 mb-4 shadow-sm flex-shrink-0">
+                <span className="font-black text-[#3D2B1F] text-sm uppercase tracking-wide">
+                  Total Skor:
+                </span>
+                <span className="font-black text-2xl text-[#95D5B2]">
+                  0 {/* TODO: Akan diganti dengan state skor dari sistem penilaian */}
+                </span>
+              </div>
+
               {/* Kotak Kode Rahasia */}
-              <div className="bg-[#FFB703] border-4 border-[#5A189A] rounded-2xl p-4 w-full mb-6 shadow-inner relative overflow-hidden">
+              <div className="bg-[#FFB703] border-4 border-[#5A189A] rounded-2xl p-3 sm:p-4 w-full mb-4 sm:mb-6 shadow-inner relative overflow-hidden flex-shrink-0">
                 <p className="text-[10px] font-black text-[#5A189A]/70 uppercase tracking-widest mb-1 relative z-10">
                   KODE RAHASIA:
                 </p>
-                <p className="text-5xl font-black text-[#5A189A] tracking-widest relative z-10">
+                <p className="text-4xl sm:text-5xl font-black text-[#5A189A] tracking-widest relative z-10">
                   {victoryCode}
                 </p>
-                {/* Efek kilap sederhana di dalam kotak kode */}
+                {/* Efek kilap sederhana */}
                 <div className="absolute top-0 left-[-100%] w-1/2 h-full bg-white/30 skew-x-12 animate-[shimmer_2s_infinite]" />
               </div>
 
               <button 
-                // Sementara akan mengarahkan user kembali ke menu utama (peta)
                 onClick={() => router.push("/")}
-                className="w-full bg-[#5A189A] hover:bg-[#4a1380] text-white font-black py-4 rounded-2xl tracking-widest shadow-lg active:scale-95 transition-all"
+                className="w-full flex-shrink-0 bg-[#5A189A] hover:bg-[#4a1380] text-white font-black py-3 sm:py-4 rounded-xl sm:rounded-2xl tracking-widest shadow-lg active:scale-95 transition-all"
               >
                 KEMBALI KE PETA
               </button>
