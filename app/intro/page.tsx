@@ -46,7 +46,7 @@ export default function IntroPage() {
 
   return (
     <main 
-      className="relative flex flex-col w-full max-w-md mx-auto h-[100dvh] overflow-hidden bg-center bg-cover bg-white text-[#3D2B1F]" 
+      className="relative flex flex-col items-center w-full mx-auto h-[100dvh] overflow-hidden bg-center bg-cover bg-white text-[#3D2B1F]" 
     >
         <div className="absolute inset-0 bg-[url('/src/background/intro_bg.png')] bg-cover bg-center  blur-[3px]"></div>
       {/* LAYER KABUT */}
@@ -59,21 +59,22 @@ export default function IntroPage() {
       {/* --- LAYER 1: SCROLLABLE CONTENT --- */}
       {/* Area ini menampung dialog dan objek, bisa di-scroll jika isinya panjang */}
       {/* pb-32 (padding-bottom) ditambahkan agar konten terbawah tidak tertutup oleh tombol floating */}
-      <div className="flex-1 w-full overflow-y-auto pb-32 z-10">
+      <div className="flex-1 w-auto max-w-md overflow-y-auto pb-32 z-10">
         
         {/* AREA DIALOG (Atas) - Memanjang secara natural sesuai isi teks */}
-        <div className="bg-[#EDF2F4] rounded-b-[40px] p-6 shadow-lg flex flex-col gap-6">
-          <p className="text-sm font-bold leading-relaxed">
-            {formatText(currentData.textTop)}
-          </p>
+        <div className="bg-[#EDF2F4] rounded-b-[40px] p-6 shadow-lg flex flex-row gap-6 w-full">
           
-          {/* <div className={`flex ${currentData.itemsContainerClass} gap-4`}> */}
-          <div className={`flex items-start gap-4`}>
+          <div className="py-12 gap-2 flex-col flex">
+            <p className="text-sm font-bold leading-relaxed">
+              {formatText(currentData.textTop)}
+            </p>
+
             <p className="flex-1 text-sm font-bold leading-relaxed">
                 {formatText(currentData.textBottom)}
             </p>
-            
-            {/* WADAH DIPERBESAR: w-24 menjadi w-32 atau w-40 */}
+          </div>
+
+          {/* WADAH DIPERBESAR: w-24 menjadi w-32 atau w-40 */}
             <div className={`relative flex-shrink-0 w-32 h-64 ${currentData.imgCustomClass}`}>
                 <Image 
                 src={currentData.intanPose} 
@@ -84,11 +85,10 @@ export default function IntroPage() {
                 className="object-contain"
                 />
             </div>
-            </div>
         </div>
 
         {/* Jarak aman antara Dialog dan Peta/Gulungan */}
-        <div className="mt-10 mb-6 flex flex-col items-center justify-center w-full px-6">
+        <div className="mt-20 mb-6 flex flex-col items-center justify-center w-full px-6">
           {currentData.bottomComponent === "scroll" ? (
              <div className="relative w-full h-48 sm:h-56">
                <Image src="/src/gulungan.png" alt="Scroll" fill className="object-contain drop-shadow-xl" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import Image from "next/image";
 
 export interface CardItem {
@@ -10,22 +10,69 @@ export interface CardItem {
   isMatched: boolean;
 }
 
-// 1. UPDATE PROPS: Tambahkan onComplete
 interface MemoryGameProps {
   data: {
     pairsToFind: number;
     cards: string[]; 
   };
   onResult: (isCorrect: boolean, msg?: string) => void;
-  onComplete: (generatedCode: string) => void; // <-- TAMBAHKAN INI
+  onComplete: (generatedCode: string, score: number) => void;
 }
 
-export default function MemoryGame({ data, onResult, onComplete }: MemoryGameProps) {
+const MemoryGame = forwardRef(({ data, onResult, onComplete }: MemoryGameProps, ref) => {
   // --- STATE MANAGEMENT ---
   const [cards, setCards] = useState<CardItem[]>([]);
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [isLocked, setIsLocked] = useState(false);
   const [isWon, setIsWon] = useState(false);
+
+  // PELACAK METRIK PENILAIAN
+  const [clickCount, setClickCount] = useState(0);
+  const [hintCount, setHintCount] = useState(0);
+  const startTimeRef = useRef<number | null>(null);
+
+  // ==========================================
+  // EXPOSE FUNGSI PETUNJUK KE INDUK (TEMPAT TOMBOL)
+  // ==========================================
+  useImperativeHandle(ref, () => ({
+    triggerHint() {
+      // Pengaman: Tolak petunjuk jika game belum siap, sudah menang, sedang dikunci, atau ada kartu terbuka
+      if (cards.length === 0 || isWon || isLocked || flippedIndices.length > 0) return;
+
+      // Cari SEMUA indeks kartu yang BELUM COCOK dan BELUM TERBUKA
+      const availableIndices = cards
+        .map((c, i) => (!c.isMatched && !c.isFlipped ? i : -1))
+        .filter((i) => i !== -1);
+
+      // Jika tidak ada kartu yang bisa dibuka, hentikan
+      if (availableIndices.length === 0) return;
+
+      // Pilih SATU kartu secara acak dari daftar yang tersedia
+      const randomIndex = Math.floor(Math.random() * availableIndices.length);
+      const hintCardIndex = availableIndices[randomIndex];
+
+      // Tambah penalti skor hint
+      setHintCount((prev) => prev + 1);
+
+      // Kunci papan & Buka HANYA SATU kartu tersebut
+      setIsLocked(true);
+      setCards((prev) =>
+        prev.map((c, i) =>
+          i === hintCardIndex ? { ...c, isFlipped: true } : c
+        )
+      );
+
+      // Tutup kembali kartu tersebut setelah 2 detik
+      setTimeout(() => {
+        setCards((prev) =>
+          prev.map((c, i) =>
+            i === hintCardIndex ? { ...c, isFlipped: false } : c
+          )
+        );
+        setIsLocked(false);
+      }, 2000);
+    }
+  }));
 
   // ==========================================
   // TAHAP 2: SHUFFLE ENGINE
@@ -53,14 +100,12 @@ export default function MemoryGame({ data, onResult, onComplete }: MemoryGamePro
   // TAHAP 3: LOGIKA GAME LOOP (Pencocokan)
   // ==========================================
   useEffect(() => {
-    // Jika ada 2 kartu yang sedang dibuka, jalankan pengecekan
     if (flippedIndices.length === 2) {
-      setIsLocked(true); // Kunci papan agar tidak bisa klik kartu ke-3
+      setIsLocked(true); 
       
       const index1 = flippedIndices[0];
       const index2 = flippedIndices[1];
 
-      // JIKA COCOK
       if (cards[index1].value === cards[index2].value) {
         setCards((prev) =>
           prev.map((card, i) =>
@@ -69,15 +114,9 @@ export default function MemoryGame({ data, onResult, onComplete }: MemoryGamePro
         );
         setFlippedIndices([]);
         setIsLocked(false);
-        
-        // Panggil fungsi onResult untuk memicu reaksi Intan di Sidebar
         onResult(true, "Hebat! Bener banget, terusno kabeh sampe entek!");
-      } 
-      // JIKA TIDAK COCOK
-      else {
+      } else {
         onResult(false, "Waduh, dudu kui barange, baleni maneh!");
-        
-        // Beri jeda 1 detik sebelum kartu ditutup kembali
         setTimeout(() => {
           setCards((prev) =>
             prev.map((card, i) =>
@@ -98,92 +137,55 @@ export default function MemoryGame({ data, onResult, onComplete }: MemoryGamePro
     const matchedPairs = cards.filter((c) => c.isMatched).length / 2;
     
     if (cards.length > 0 && matchedPairs === data.pairsToFind && !isWon) {
-      
-      setIsWon(true); // 3. LANGSUNG KUNCI agar tidak berulang-ulang
+      setIsWon(true); 
+
+      const endTime = Date.now();
+      const timeElapsedInSeconds = startTimeRef.current 
+        ? Math.floor((endTime - startTimeRef.current) / 1000) 
+        : 0;
+
+      const idealClicks = data.pairsToFind * 2; 
+      const extraClicks = Math.max(0, clickCount - idealClicks);
+
+      const baseScore = 1000;
+      const clickPenalty = extraClicks * 20;
+      const timePenalty = timeElapsedInSeconds * 5;
+      const hintPenalty = hintCount * 100;
+
+      let finalScore = baseScore - clickPenalty - timePenalty - hintPenalty;
+      if (finalScore < 100) finalScore = 100;
 
       setTimeout(() => {
         const randomCode = Math.random().toString(36).substring(2, 4).toUpperCase();
-        onComplete(randomCode);
+        onComplete(randomCode, finalScore);
       }, 500); 
     }
-  }, [cards, data.pairsToFind, onComplete, isWon]);
+  }, [cards, data.pairsToFind, onComplete, isWon, clickCount, hintCount]);
 
   // ==========================================
   // HANDLER KLIK KARTU
   // ==========================================
   const handleCardClick = (index: number) => {
-    // Cegah klik jika papan dikunci, kartu sudah terbuka, atau kartu sudah cocok
     if (isLocked || cards[index].isFlipped || cards[index].isMatched) return;
 
-    // Buka kartu secara visual
+    if (startTimeRef.current === null) {
+      startTimeRef.current = Date.now();
+    }
+    setClickCount((prev) => prev + 1);
+
     setCards((prev) =>
       prev.map((card, i) => (i === index ? { ...card, isFlipped: true } : card))
     );
-    
-    // Catat indeks kartu yang baru saja dibuka
     setFlippedIndices((prev) => [...prev, index]);
   };
 
-  // return (
-  //   <div className="w-full h-full flex flex-col items-center justify-center p-4">
-  //     {/* GRID KARTU (Visualisasi 3D Flip) */}
-  //     <div className="grid grid-cols-4 gap-4 max-w-2xl mx-auto perspective-1000">
-  //       {cards.map((card, index) => (
-  //         <button
-  //           key={card.id}
-  //           onClick={() => handleCardClick(index)}
-  //           // Kartu yang sudah matched akan sedikit memudar dan tidak bisa diklik
-  //           className={`relative w-20 h-28 sm:w-28 sm:h-40 cursor-pointer outline-none transition-opacity duration-500 ${
-  //             card.isMatched ? "opacity-60 cursor-default" : "hover:-translate-y-2"
-  //           } [perspective:1000px]`}
-  //           style={{ transition: "transform 0.2s ease-out" }}
-  //         >
-  //           {/* Inner Container untuk efek 3D Rotate */}
-  //           <div 
-  //             className="w-full h-full duration-500 [transform-style:preserve-3d] shadow-lg rounded-xl"
-  //             style={{ transform: card.isFlipped || card.isMatched ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
-  //           >
-              
-  //             {/* SISI DEPAN (Tertutup / Cover Batik) */}
-  //             <div className="absolute inset-0 w-full h-full rounded-xl border-2 border-[#FFB703]/50 bg-[#5A189A] flex items-center justify-center [backface-visibility:hidden] overflow-hidden">
-  //                {/* TODO: Ganti src ini dengan gambar cover batik Anda di folder public */}
-  //                {/* <Image src="/cover_kartu_batik.png" alt="Card Back" fill className="object-cover" /> */}
-  //                <span className="text-white/30 text-xs">Batikan</span>
-  //             </div>
-
-  //             {/* SISI BELAKANG (Terbuka / Aksara Jawa) */}
-  //             <div className="absolute inset-0 w-full h-full rounded-xl border-4 border-[#5A189A] bg-[#EDF2F4] flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden">
-  //                {/* TODO: Integrasikan gambar Aksara Anda di sini */}
-  //                {/* <Image src={`/aksara/${card.value}.png`} alt={card.value} fill className="object-contain p-2" /> */}
-                 
-  //                {/* Teks placeholder sementara */}
-  //                <span className="text-3xl font-black text-[#5A189A] capitalize">
-  //                  {card.value}
-  //                </span>
-  //             </div>
-
-  //           </div>
-  //         </button>
-  //       ))}
-  //     </div>
-  //   </div>
-  // );
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-4">
-      
-      {/* GRID KARTU (Responsive Grid) */}
-      {/* - grid-cols-3: Di layar HP (landscape sempit), kartu jadi 3 kolom agar tidak terlalu kecil.
-        - sm:grid-cols-4: Di tablet/desktop, kartu jadi 4 kolom agar lebih seimbang.
-        - gap-3 sm:gap-4: Jarak antar kartu lebih rapat di HP, renggang di desktop.
-      */}
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-6 max-w-3xl w-full mx-auto perspective-1000 items-center justify-items-center">
-        
         {cards.map((card, index) => (
           <button
             key={card.id}
             onClick={() => handleCardClick(index)}
-            // PERBAIKAN UKURAN: Menggunakan aspect-ratio agar proporsinya selalu terjaga (seperti kartu remi sungguhan)
-            // w-full max-w-[100px] akan membuat kartu menyesuaikan kolom grid, tapi tidak lebih dari 100px lebarnya
             className={`relative w-full aspect-[2.5/3.5] max-w-[90px] sm:max-w-[120px] cursor-pointer outline-none transition-opacity duration-500 ${
               card.isMatched ? "opacity-60 cursor-default" : "hover:-translate-y-2"
             } [perspective:1000px]`}
@@ -193,37 +195,24 @@ export default function MemoryGame({ data, onResult, onComplete }: MemoryGamePro
               className="w-full h-full duration-500 [transform-style:preserve-3d] shadow-2xl rounded-xl"
               style={{ transform: card.isFlipped || card.isMatched ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
             >
-              
-              {/* SISI DEPAN (Tertutup / Cover Batik PNG) */}
+              {/* SISI DEPAN (Tertutup) */}
               <div className="absolute inset-0 w-full h-full rounded-xl flex items-center justify-center [backface-visibility:hidden] overflow-hidden bg-black/20">
-                 {/* CARA MEMASUKKAN PNG: 
-                    Pastikan file 'cover_batik.png' ada di dalam folder 'public/src/' (atau sesuai struktur Anda).
-                    Gunakan <Image> dengan fill dan object-cover agar pas di dalam kotak.
-                 */}
-                 <Image 
-                    src="/src/backCard.png" // GANTI DENGAN PATH PNG BATIK ANDA
-                    alt="Card Back" 
-                    fill 
-                    className="object-contain p-1 rounded-xl border-2 border-white/20" 
-                 />
+                 <Image src="/src/backCard.png" alt="Card Back" fill className="object-contain p-1 rounded-xl border-2 border-white/20" />
               </div>
 
-              {/* SISI BELAKANG (Terbuka / Aksara Jawa) */}
-              <div className="absolute inset-0 w-full h-full rounded-xl border-[3px] border-[#5A189A] bg-white flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden shadow-inner">
-                 
-                 {/* Nantinya, Anda bisa mengganti teks ini dengan PNG Aksara seperti ini:
-                    <Image src={`/src/aksara/${card.value}.png`} alt={card.value} fill className="object-contain p-2" />
-                 */}
+              {/* SISI BELAKANG (Terbuka) */}
+              <div className="absolute inset-0 w-full h-full rounded-xl border-[3px] border-[rgb(90,24,154)] bg-white flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden shadow-inner">
                  <span className="text-2xl sm:text-4xl font-black text-[#5A189A] capitalize drop-shadow-sm">
                    {card.value}
                  </span>
-                 
               </div>
-
             </div>
           </button>
         ))}
       </div>
     </div>
   );
-}
+});
+
+MemoryGame.displayName = "MemoryGame";
+export default MemoryGame;

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useGameStore } from "@/store/useGameStore"
 
 // Array data untuk mempermudah render dan maintenance
 const mapLevels = [
@@ -55,23 +56,38 @@ const mapLevels = [
 
 interface InteractiveMapProps {
   onSelectRoute?: (route: string) => void;
+  onLevelStatus?: (levelId: number, isLocked: boolean) => void;
+  variant?: "intro" | "hub";
 }
 
-export default function InteractiveMap({ onSelectRoute }: InteractiveMapProps) {
+export default function InteractiveMap({ onSelectRoute, onLevelStatus, variant= "intro" }: InteractiveMapProps) {
   const router = useRouter();
  // Pisahkan state hover dan click agar yang diklik tetap menyala (sticky)
   const [hoveredLevel, setHoveredLevel] = useState<number | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const currentUnlockedLevel = useGameStore((state) => state.currentUnlockedLevel);
+  
 
   // Level yang aktif adalah yang sedang di-hover, atau fallback ke yang sedang dipilih
   const activeLevel = hoveredLevel !== null ? hoveredLevel : selectedLevel;
 
+  // ==========================================
+  // LOGIKA GAYA DINAMIS (Berdasarkan Variant)
+  // ==========================================
+  const containerClass = variant === "hub" 
+    ? "relative w-full h-full max-w-3xl mx-auto flex flex-col items-center justify-center mt-36" // Gaya Besar untuk Map Hub
+    : "relative w-full max-w-md mx-auto flex flex-col items-center"; // Gaya Kecil untuk Intro
+
+  const svgClass = variant === "hub"
+    ? "w-full h-full max-h-[75vh] drop-shadow-2xl overflow-visible object-contain scale-100 sm:scale-105 lg:scale-110 transition-transform duration-500"
+    : "w-full h-full max-h-[35vh] drop-shadow-2xl overflow-visible object-contain";
+
   return (
-    <div className="relative w-full max-w-md mx-auto flex flex-col items-center">
+    <div className={containerClass}>
       
       {/* --- LABEL NAMA LEVEL --- */}
       <div 
-        className={`absolute -top-12 px-6 py-2 bg-white rounded-full shadow-lg border-2 border-[#5A189A] transition-all duration-300 z-20 pointer-events-none ${
+        className={`absolute -top-14 px-6 py-2 bg-white rounded-full shadow-lg border-2 border-[#5A189A] transition-all duration-300 z-20 pointer-events-none ${
           activeLevel ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         }`}
       >
@@ -84,12 +100,14 @@ export default function InteractiveMap({ onSelectRoute }: InteractiveMapProps) {
       {/* --- PETA SVG --- */}
       <svg 
         viewBox="0 0 295 269"
-        className="w-full h-full max-h-[35vh] drop-shadow-2xl overflow-visible object-contain"
+        className={svgClass}
       >
         {mapLevels.map((level) => {
           const isBlank = level.id === 0;
           const isActive = activeLevel === level.id;
           const isSelected = selectedLevel === level.id;
+          const isLocked = level.id > currentUnlockedLevel;
+          const isCompleted = level.id < currentUnlockedLevel;
 
           return (
             // Gunakan tag <g> (group) untuk membungkus path dan text
@@ -99,8 +117,11 @@ export default function InteractiveMap({ onSelectRoute }: InteractiveMapProps) {
                 onClick={() => {
                   if (!isBlank) {
                     setSelectedLevel(level.id); // Buat sticky
-                    if (onSelectRoute) {
-                      onSelectRoute(level.route); // Kirim rute ke IntroPage
+                    // Beri tahu halaman induk tentang status level yang diklik
+                    if (onLevelStatus) onLevelStatus(level.id, isLocked);
+                    // Hanya kirim rute jika level TIDAK terkunci
+                    if (onSelectRoute && !isLocked) {
+                      onSelectRoute(level.route); 
                     }
                   }
                 }}
@@ -114,9 +135,12 @@ export default function InteractiveMap({ onSelectRoute }: InteractiveMapProps) {
                   transition-all duration-300
                   ${isBlank 
                     ? "fill-[#D8B4E2] stroke-white stroke-2 opacity-60 pointer-events-none" 
-                    : isActive || isSelected // Menyala jika di-hover ATAU sedang dipilih
-                      ? "cursor-pointer fill-[#5A189A] stroke-[#FFB703] stroke-[4px] drop-shadow-[0_0_15px_rgba(255,183,3,0.8)]" 
-                      : "cursor-pointer fill-[#D8B4E2] stroke-white stroke-2 opacity-80 hover:opacity-100"
+                    : isLocked 
+                      // GAYA VISUAL UNTUK LEVEL TERKUNCI (Misal: Hitam Putih / Abu-abu)
+                      ? "cursor-not-allowed fill-gray-500 stroke-gray-300 stroke-2 opacity-50"
+                      : isActive || isSelected 
+                        ? "cursor-pointer fill-[#5A189A] stroke-[#FFB703] stroke-[4px] drop-shadow-[0_0_15px_rgba(255,183,3,0.8)]" 
+                        : "cursor-pointer fill-[#D8B4E2] stroke-white stroke-2 opacity-80 hover:opacity-100"
                   }
                 `}
               />

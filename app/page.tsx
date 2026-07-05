@@ -31,7 +31,7 @@ export default function WelcomePage() {
       {/* Card Input Nama */}
       <div className="bg-[#EDF2F4] h-full w-full max-w-md rounded-t-[40px] p-8 flex flex-col items-center shadow-2xl relative z-10">
         <p className="text-center text-sm font-normal text-[#212529] mb-6">
-          Sarangan Escape Room adalah sebuah game interaktif yang dapat membantu proses anak belajar membaca dan memahami aksara jawa.
+          Sarangan Escape Room yaiku game interaktif kang bisa mbantu bocah-bocah sinau maca lan ngerteni aksara Jawa.
         </p>
 
         <input

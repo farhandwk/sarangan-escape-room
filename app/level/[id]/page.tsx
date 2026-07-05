@@ -20,15 +20,19 @@ export default function ReusableLevelPage({ params }: { params: Promise<{ id: st
 
   const addCollectedCode = useGameStore((state) => state.addCollectedCode);
   const unlockNextLevel = useGameStore((state) => state.unlockNextLevel);
+  const saveLevelScore = useGameStore((state) => state.saveLevelScore);
   const [victoryCode, setVictoryCode] = useState<string | null>(null); // Jika tidak null, tampilkan Pop-up Kemenangan
 
   // --- STATE MANAGEMENT ---
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [introIndex, setIntroIndex] = useState(0);
-  const [gameState, setGameState] = useState<"idle" | "success" | "error">("idle");
+  const [gameState, setGameState] = useState<"idle" | "success" | "error" | "hint">("idle");
+  const [levelScore, setLevelScore] = useState<number>(0);
+  const [hintRequestCount, setHintRequestCount] = useState<number>(0);
 
   const router = useRouter()
   const sidebarTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const gameRef = useRef<any>(null)
 
   if (!currentLevel) {
     return <div className="flex items-center justify-center h-screen bg-black text-white">Data Level tidak ditemukan.</div>;
@@ -44,18 +48,26 @@ export default function ReusableLevelPage({ params }: { params: Promise<{ id: st
     ? currentLevel.introSequence?.[introIndex] || { text: "Data intro belum ada...", intanPose: defaultIntan }
     : currentLevel.sidebarState?.[gameState] || { text: "Data state belum ada...", intanPose: defaultIntan };
 
-  // --- HANDLER BUTTON SIDEBAR ---
   const handleSidebarButton = () => {
     if (!isGameStarted) {
-      // Logic Lanjut Intro
       if (introIndex < currentLevel.introSequence.length - 1) {
         setIntroIndex((prev) => prev + 1);
       } else {
-        setIsGameStarted(true); // Selesai intro, mulai game!
+        setIsGameStarted(true);
       }
     } else {
-      // Logic Bantuan/Petunjuk saat game main
-      alert("Menampilkan petunjuk...");
+      // LOGIKA TOMBOL PETUNJUK TERBARU 👇
+      // 1. Panggil langsung fungsi di dalam MemoryGame melalui ref
+      gameRef.current?.triggerHint();
+      
+      // 2. Ubah reaksi wajah Intan menjadi status 'hint'
+      setGameState("hint");
+      
+      // 3. Kembalikan wajah Intan ke idle setelah 2.5 detik
+      if (sidebarTimerRef.current) clearTimeout(sidebarTimerRef.current);
+      sidebarTimerRef.current = setTimeout(() => {
+        setGameState("idle");
+      }, 2500);
     }
   };
 
@@ -69,48 +81,41 @@ export default function ReusableLevelPage({ params }: { params: Promise<{ id: st
     }
   };
 
+    // Props standar yang akan disuntikkan ke SEMUA tipe game (Memory, Explorer, dll)
+    const handleGameResult = (isCorrect: boolean) => {
+    // 1. Batalkan timer sebelumnya (mencegah glitch saat spam click)
+    if (sidebarTimerRef.current) {
+      clearTimeout(sidebarTimerRef.current);
+    }
+
+    // 2. Ubah state Sidebar (merubah warna & pose Intan)
+    setGameState(isCorrect ? "success" : "error");
+    
+    // 3. Mulai timer baru (Kembali ke "idle" setelah 1.5 detik)
+    sidebarTimerRef.current = setTimeout(() => {
+      setGameState("idle");
+    }, 1500); 
+  };
+
   // --- COMPONENT FACTORY ---
   const renderGameContent = () => {
     // Sembunyikan area game jika Intro masih berlangsung
     if (!isGameStarted) return null;
-
-    // Props standar yang akan disuntikkan ke SEMUA tipe game (Memory, Explorer, dll)
-    const props = {
-      data: currentLevel.gameData,
-      
-      // Handler saat pemain mencoba menjawab (memicu reaksi Sidebar)
-      onResult: (isCorrect: boolean) => {
-        // 1. Batalkan timer sebelumnya (mencegah glitch saat spam click)
-        if (sidebarTimerRef.current) {
-          clearTimeout(sidebarTimerRef.current);
-        }
-
-        // 2. Ubah state Sidebar (merubah warna & pose Intan)
-        setGameState(isCorrect ? "success" : "error");
-        
-        // 3. Mulai timer baru (Kembali ke "idle" setelah 1.5 detik)
-        sidebarTimerRef.current = setTimeout(() => {
-          setGameState("idle");
-        }, 1500); 
-      },
-
-      // Handler saat permainan selesai / menang
-      onComplete: (code: string) => {
-        // 1. Simpan kode alfanumerik ke State Global (Zustand/LocalStorage)
-        addCollectedCode(id, code); 
-        
-        // 2. Tandai level berikutnya agar terbuka
-        unlockNextLevel();
-        
-        // 3. Picu munculnya Pop-up / UI Kemenangan di layar
-        setVictoryCode(code); 
-      }
-    };
-
     // Render komponen spesifik berdasarkan 'gameType' dari levelConfig.ts
     switch (currentLevel.gameType) {
       case "memory": 
-        return <MemoryGame {...props} />;
+        return <MemoryGame 
+            ref={gameRef} 
+            data={currentLevel.gameData}
+            onResult={handleGameResult}
+            onComplete={(code, score) => {
+              setVictoryCode(code);
+              setLevelScore(score); // Menyimpan skor ke state lokal
+              addCollectedCode(id, code);
+              saveLevelScore(id, score)
+              unlockNextLevel(Number(id));;
+            }}
+        />;
         
       // TODO: Uncomment saat Anda membuat level berikutnya
       // case "quiz": 
@@ -133,6 +138,7 @@ export default function ReusableLevelPage({ params }: { params: Promise<{ id: st
     };
   }, []);
   
+  const collectedCodes = useGameStore((state) => state.collectedCodes);
 
   return (
     <>
@@ -183,7 +189,7 @@ export default function ReusableLevelPage({ params }: { params: Promise<{ id: st
                   alt="Intan" 
                   fill 
                   sizes="(max-width: 768px) 25vw, 200px"
-                  className="object-contain object-bottom drop-shadow-xl transition-all duration-300" 
+                  className={`object-contain object-bottom drop-shadow-xl ${activeSidebarData.imgCustomClass || ''}`} 
                 />
               ) : null}
             </div>
@@ -207,7 +213,7 @@ export default function ReusableLevelPage({ params }: { params: Promise<{ id: st
           {isGameStarted && (
             <div className="absolute top-6 right-8 flex gap-4 pointer-events-none z-30">
                <div className="bg-[#5A189A]/90 backdrop-blur-sm text-white px-6 py-2 rounded-full font-black shadow-lg border-2 border-[#FFB703]">
-                 KODE: ? ?
+                 KODE: {[ "1", "2", "3", "4" ].map((lvlId) => collectedCodes[lvlId] || "??").join(" - ")}
                </div>
             </div>
           )}
@@ -251,7 +257,7 @@ export default function ReusableLevelPage({ params }: { params: Promise<{ id: st
                   Total Skor:
                 </span>
                 <span className="font-black text-2xl text-[#95D5B2]">
-                  0 {/* TODO: Akan diganti dengan state skor dari sistem penilaian */}
+                  {levelScore}
                 </span>
               </div>
 
@@ -268,7 +274,7 @@ export default function ReusableLevelPage({ params }: { params: Promise<{ id: st
               </div>
 
               <button 
-                onClick={() => router.push("/")}
+                onClick={() => router.push("/map/")}
                 className="w-full flex-shrink-0 bg-[#5A189A] hover:bg-[#4a1380] text-white font-black py-3 sm:py-4 rounded-xl sm:rounded-2xl tracking-widest shadow-lg active:scale-95 transition-all"
               >
                 KEMBALI KE PETA

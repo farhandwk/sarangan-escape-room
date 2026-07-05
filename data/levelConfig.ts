@@ -3,7 +3,8 @@ export type GameType = "memory" | "quiz" | "explorer" | "dragdrop";
 
 export interface DialogStep {
   text: string;
-  intanPose: string; 
+  intanPose: string;
+  imgCustomClass?: string; 
 }
 
 export interface LevelData {
@@ -31,15 +32,15 @@ export const levelConfig: Record<string, LevelData> = {
     // Urutan dialog saat pertama kali level dibuka
     introSequence: [
       {
-        text: "Wah, kita sudah sampai di Telaga Sarangan! Udara di sini sejuk sekali ya.",
+        text: "Wah, awake dhewe wis tekan Telaga Sarangan! Hawane ing kene adhem banget ya.",
         intanPose: "/src/girlPoses/cewek_lambai_nobg_edited.png" // Pastikan file ini ada di folder public/girlPoses/
       },
       {
-        text: "Tunggu sebentar... Sepertinya kabutnya membawa beberapa kartu Aksara Jawa yang berantakan.",
+        text: "Enteni sedhela... Sajake pedhute nggawa pirang-pirang kartu Aksara Jawa sing pating sumebar.",
         intanPose: "/src/girlPoses/cewek_khawatir_nobg.png"
       },
       {
-        text: "Ayo bantu aku mencari pasangan kartu yang tepat agar kabut ini menghilang!",
+        text: "Ayo rewangi aku nggoleki pasangan kartu sing bener supaya pedhut iki ilang!",
         intanPose: "/src/girlPoses/cewek_heroic_nobg.png"
       }
     ],
@@ -47,18 +48,27 @@ export const levelConfig: Record<string, LevelData> = {
     // Reaksi Intan saat permainan sedang berlangsung
     sidebarState: {
       idle: {
-        text: "Pilih dua kartu untuk menemukan pasangannya. Ingat-ingat bentuk Aksaranya ya!",
-        intanPose: "/src/girlPoses/cewek_ramah_nobg.png"
+        text: "Pilih rong kartu kanggo nemokake pasangane. Eling-eling wujude Aksarane ya!",
+        intanPose: "/src/girlPoses/cewek_ramah_nobg.png",
+        imgCustomClass: "scale-[1.6] origin-bottom -translate-x-2"
       },
       success: {
-        text: "Hebat! Pasangan yang tepat. Lanjutkan!",
+        text: "Hebat! Pasangane pas. Terusna!",
         intanPose: "/src/girlPoses/cewek_heroic_nobg.png"
       },
       error: {
-        text: "Ups, sepertinya bukan itu pasangannya. Coba ingat lagi posisinya.",
-        intanPose: "/src/girlPoses/cewek_nantang_nobg.png" // Pakai pose mikir/nantang
+        text: "Waduh, sajake dudu kuwi pasangane. Jajal eling-eling maneh posisine.",
+        intanPose: "/src/girlPoses/cewek_nantang_nobg.png",
+        imgCustomClass: "scale-[1.3] origin-bottom -translate-x-2"
+        
+      },
+      hint: {
+        text: "Iki bocorane! Gatekna apik-apik ya, sedhela lho iki!",
+        intanPose: "/src/girlPoses/cewek_ramah_nobg.png",
+        imgCustomClass: "scale-[1.6] origin-bottom -translate-x-2"
       }
     },
+    
 
     // Data spesifik yang akan dilempar ke komponen MemoryGame
     gameData: {
