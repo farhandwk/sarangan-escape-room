@@ -25,7 +25,7 @@ export default function IntroPage() {
 
   const handleNext = () => {
     if (stepIndex === introSteps.length - 1) {
-      router.push(targetRoute); // Gunakan targetRoute dinamis, bukan hardcode "/level/1"
+      router.replace(targetRoute); // Gunakan targetRoute dinamis, bukan hardcode "/level/1"
       return;
     }
 
