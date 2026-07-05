@@ -22,18 +22,34 @@ export interface LevelData {
   gameData: any; 
 }
 
+// ==========================================
+// BANK AKSARA (Gudang Data Master)
+// Tambahkan semua aksara di sini nanti!
+// ==========================================
+export const AKSARA_BANK = [
+  { id: "ha", aksaraChar: "ꦲ", latin: "Ha" },
+  { id: "na", aksaraChar: "ꦤ", latin: "Na" },
+  { id: "ca", aksaraChar: "ꦕ", latin: "Ca" },
+  { id: "ra", aksaraChar: "ꦫ", latin: "Ra" },
+  { id: "ka", aksaraChar: "ꦏ", latin: "Ka" },
+  { id: "da", aksaraChar: "ꦢ", latin: "Da" },
+  { id: "ta", aksaraChar: "ꦠ", latin: "Ta" },
+  { id: "sa", aksaraChar: "ꦱ", latin: "Sa" },
+  { id: "wa", aksaraChar: "ꦮ", latin: "Wa" },
+  { id: "la", aksaraChar: "ꦭ", latin: "La" },
+  // Tinggal tambah sisanya kapan pun Anda mau boss!
+];
 export const levelConfig: Record<string, LevelData> = {
   "1": {
     id: "1",
     name: "Telaga Sarangan",
     gameType: "memory", 
-    bgImage: "/src/background/sarangan_1_room.png", // Pastikan file ini ada di folder public/background/
+    bgImage: "/src/background/sarangan_1_room.png", 
     
-    // Urutan dialog saat pertama kali level dibuka
     introSequence: [
       {
         text: "Wah, awake dhewe wis tekan Telaga Sarangan! Hawane ing kene adhem banget ya.",
-        intanPose: "/src/girlPoses/cewek_lambai_nobg_edited.png" // Pastikan file ini ada di folder public/girlPoses/
+        intanPose: "/src/girlPoses/cewek_lambai_nobg_edited.png" 
       },
       {
         text: "Enteni sedhela... Sajake pedhute nggawa pirang-pirang kartu Aksara Jawa sing pating sumebar.",
@@ -45,7 +61,6 @@ export const levelConfig: Record<string, LevelData> = {
       }
     ],
 
-    // Reaksi Intan saat permainan sedang berlangsung
     sidebarState: {
       idle: {
         text: "Pilih rong kartu kanggo nemokake pasangane. Eling-eling wujude Aksarane ya!",
@@ -69,11 +84,10 @@ export const levelConfig: Record<string, LevelData> = {
       }
     },
     
-
-    // Data spesifik yang akan dilempar ke komponen MemoryGame
+    // PERUBAHAN: Masukkan Bank Aksara dan jumlah pasangan
     gameData: {
-      pairsToFind: 3,
-      cards: ["ꦲ", "ꦤ", "ꦕ"] 
+      pairsToFind: 3, // Ubah angka ini jika client ingin lebih dari 3 pasang
+      pool: AKSARA_BANK 
     }
   },
 };
