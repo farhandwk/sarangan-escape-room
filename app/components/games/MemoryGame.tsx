@@ -7,7 +7,7 @@ import Image from "next/image";
 // PERUBAHAN 1: Struktur Kartu Diperbarui agar bisa menampung tipe berbeda (Aksara vs Latin)
 export interface CardItem {
   id: string;         // ID unik untuk render react (key)
-  pairId: string;     // Kunci pencocokan pasangan (misal: "ha" harus sama dengan "ha")
+  pairId: number;     // Kunci pencocokan pasangan (misal: "ha" harus sama dengan "ha")
   type: "aksara" | "latin"; // Penentu wujud kartu
   content: string;    // Isi teksnya (Karakter Aksara Jawa ATAU teks Latin)
   isFlipped: boolean;
@@ -18,7 +18,7 @@ export interface CardItem {
 interface MemoryGameProps {
   data: {
     pairsToFind: number;
-    pool: { id: string; aksaraChar: string; latin: string }[]; 
+    pool: { id: number; aksaraChar: string; latin: string }[]; 
   };
   onResult: (isCorrect: boolean, msg?: string) => void;
   onComplete: (generatedCode: string, score: number) => void;
@@ -219,16 +219,16 @@ const MemoryGame = forwardRef(({ data, onResult, onComplete }: MemoryGameProps, 
               </div>
 
               {/* SISI BELAKANG (Terbuka) - LOGIKA FONT DINAMIS */}
-              <div className="absolute inset-0 w-full h-full rounded-xl border-[3px] border-[rgb(90,24,154)] bg-white flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden shadow-inner">
+              <div className="absolute inset-0 w-full h-full rounded-xl border-[3px] border-[rgb(90,24,154)] bg-white flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden shadow-inner p-2">
                  
                  {card.type === "aksara" ? (
-                   // Jika tipenya Aksara, gunakan ukuran font yang lebih besar (text-4xl/6xl)
-                   <span className="text-4xl sm:text-6xl font-normal text-[#5A189A] drop-shadow-sm">
+                   // HASIL DARI UITEST: Aksara dengan font-bold dan whitespace-nowrap
+                   <span className="text-3xl md:text-5xl font-bold text-[#5A189A] drop-shadow-sm text-center whitespace-nowrap">
                      {card.content}
                    </span>
                  ) : (
-                   // Jika tipenya Latin, gunakan huruf tebal dan ukuran sedikit lebih kecil 
-                   <span className="text-2xl sm:text-4xl font-black text-[#5A189A] capitalize drop-shadow-sm">
+                   // HASIL DARI UITEST: Latin dengan whitespace-nowrap
+                   <span className="text-base md:text-2xl font-black text-[#5A189A] capitalize drop-shadow-sm text-center whitespace-nowrap">
                      {card.content}
                    </span>
                  )}

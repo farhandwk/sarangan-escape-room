@@ -26,17 +26,27 @@ export interface LevelData {
 // BANK AKSARA (Gudang Data Master)
 // Tambahkan semua aksara di sini nanti!
 // ==========================================
-export const AKSARA_BANK = [
-  { id: "ha", aksaraChar: "ꦲ", latin: "Ha" },
-  { id: "na", aksaraChar: "ꦤ", latin: "Na" },
-  { id: "ca", aksaraChar: "ꦕ", latin: "Ca" },
-  { id: "ra", aksaraChar: "ꦫ", latin: "Ra" },
-  { id: "ka", aksaraChar: "ꦏ", latin: "Ka" },
-  { id: "da", aksaraChar: "ꦢ", latin: "Da" },
-  { id: "ta", aksaraChar: "ꦠ", latin: "Ta" },
-  { id: "sa", aksaraChar: "ꦱ", latin: "Sa" },
-  { id: "wa", aksaraChar: "ꦮ", latin: "Wa" },
-  { id: "la", aksaraChar: "ꦭ", latin: "La" },
+export const KATA_BANK = [
+  {id: 1, aksaraChar: "ꦕꦫ", latin: "Cara"},
+  {id: 2, aksaraChar: "ꦱꦏ", latin: "Saka"},
+  {id: 3, aksaraChar: "ꦫꦱ", latin: "Rasa"},
+  {id: 4, aksaraChar: "ꦤꦩ", latin: "Nama"},
+  {id: 5, aksaraChar: "ꦏꦪ", latin: "Kaya"},
+  {id: 6, aksaraChar: "ꦢꦫ", latin: "Dara"},
+  {id: 7, aksaraChar: "ꦒꦮ", latin: "Gawa"},
+  {id: 8, aksaraChar: "ꦏꦕ", latin: "Kaca"},
+  {id: 9, aksaraChar: "ꦢꦢ", latin: "Dada"},
+  {id: 10, aksaraChar: "ꦗꦏ", latin: "Jaka"},
+  {id: 11, aksaraChar: "ꦏꦭ", latin: "Kala"},
+  {id: 12, aksaraChar: "ꦠꦥ", latin: "Tapa"},
+  {id: 13, aksaraChar: "ꦤꦠ", latin: "Nata"},
+  {id: 14, aksaraChar: "ꦲꦩ", latin: "Hama"},
+  {id: 15, aksaraChar: "ꦭꦥ", latin: "Lapa"},
+  {id: 16, aksaraChar: "ꦏꦠ", latin: "Kata"},
+  {id: 17, aksaraChar: "ꦩꦪ", latin: "Maya"},
+  {id: 18, aksaraChar: "ꦝꦤ", latin: "Dhana"},
+  {id: 19, aksaraChar: "ꦱꦫ", latin: "Sara"},
+  {id: 20, aksaraChar: "ꦤꦥ", latin: "Napa"}
   // Tinggal tambah sisanya kapan pun Anda mau boss!
 ];
 export const levelConfig: Record<string, LevelData> = {
@@ -86,8 +96,8 @@ export const levelConfig: Record<string, LevelData> = {
     
     // PERUBAHAN: Masukkan Bank Aksara dan jumlah pasangan
     gameData: {
-      pairsToFind: 3, // Ubah angka ini jika client ingin lebih dari 3 pasang
-      pool: AKSARA_BANK 
+      pairsToFind: 4, // Ubah angka ini jika client ingin lebih dari 3 pasang
+      pool: KATA_BANK 
     }
   },
 };
