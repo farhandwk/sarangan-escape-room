@@ -9,6 +9,7 @@ import { useGameStore } from "@/store/useGameStore";
 
 // Komponen Game
 import MemoryGame from "@/app/components/games/MemoryGame";
+import MazeGame from "@/app/components/games/MazeGame"; // <-- INJEKSI IMPORT BARU
 
 export default function ReusableLevelPage() {
   const router = useRouter();
@@ -35,10 +36,8 @@ export default function ReusableLevelPage() {
 
     if (levelIdNumber > currentUnlockedLevel) {
       alert(`Eits! Pos ${levelIdNumber} isih dikunci, bos. Rampungke tantangan sadurunge dhisik!`);
-      // Gunakan REPLACE agar tombol Back browser tidak bisa mencurangi sistem
       router.replace("/map");
     } else {
-      // Jika level sah (sudah terbuka), izinkan render UI game
       setIsAuthorized(true);
     }
   }, [idStr, currentUnlockedLevel, router]);
@@ -53,7 +52,6 @@ export default function ReusableLevelPage() {
   const sidebarTimerRef = useRef<NodeJS.Timeout | null>(null);
   const gameRef = useRef<any>(null);
 
-  // Jika belum diotorisasi oleh satpam URL, atau data level kosong, jangan render gamenya
   if (!isAuthorized || !currentLevel || !idStr) {
     return <div className="flex items-center justify-center h-[100svh] w-screen bg-black text-white">Memuat...</div>;
   }
@@ -99,6 +97,9 @@ export default function ReusableLevelPage() {
     }, 1500); 
   };
 
+  // ==========================================
+  // COMPONENT FACTORY (DIINTEGRASIKAN)
+  // ==========================================
   const renderGameContent = () => {
     if (!isGameStarted) return null;
     
@@ -116,6 +117,21 @@ export default function ReusableLevelPage() {
               unlockNextLevel(Number(idStr));
             }}
         />;
+
+      case "maze": // <-- INJEKSI LOGIKA MAZE BARU
+        return <MazeGame 
+            ref={gameRef} 
+            data={currentLevel.gameData}
+            onResult={handleGameResult}
+            onComplete={(code, score) => {
+              setVictoryCode(code);
+              setLevelScore(score); 
+              addCollectedCode(idStr, code);
+              saveLevelScore(idStr, score);
+              unlockNextLevel(Number(idStr));
+            }}
+        />;
+
       default: 
         return (
           <div className="text-white font-bold bg-black/50 backdrop-blur-md p-6 rounded-2xl border-2 border-red-500 shadow-xl">
@@ -212,8 +228,6 @@ export default function ReusableLevelPage() {
                 </p>
                 <div className="absolute top-0 left-[-100%] w-1/2 h-full bg-white/30 skew-x-12 animate-[shimmer_2s_infinite]" />
               </div>
-              
-              {/* PERBAIKAN TOMBOL: Gunakan router.replace untuk menghindari Back Ghost History */}
               <button 
                 onClick={() => router.replace("/map")}
                 className="w-full flex-shrink-0 bg-[#5A189A] hover:bg-[#4a1380] text-white font-black py-3 sm:py-4 rounded-xl sm:rounded-2xl tracking-widest shadow-lg active:scale-95 transition-all"

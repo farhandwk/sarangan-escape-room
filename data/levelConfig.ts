@@ -1,5 +1,5 @@
 // src/data/levelConfig.ts
-export type GameType = "memory" | "quiz" | "explorer" | "dragdrop";
+export type GameType = "memory" | "quiz" | "explorer" | "dragdrop" | "maze";
 
 export interface DialogStep {
   text: string;
@@ -98,6 +98,63 @@ export const levelConfig: Record<string, LevelData> = {
     gameData: {
       pairsToFind: 4, // Ubah angka ini jika client ingin lebih dari 3 pasang
       pool: KATA_BANK 
+    }
+  },
+  // ... (Data Level 1 sebelumnya) ...
+
+  "2": {
+    id: "2",
+    name: "Cemoro Sewu",
+    gameType: "maze", 
+    bgImage: "/src/background/sarangan_1_room.png", // Ganti dengan aset latar Pos 2 Anda
+    
+    introSequence: [
+      {
+        text: "Akhire awake dhewe tekan Pos 2, Cemoro Sewu! Hawane soyo adhem krasa nembus balung.",
+        intanPose: "/src/girlPoses/cewek_lambai_nobg_edited.png" 
+      },
+      {
+        text: "Eh, deloken kae! Bapak wis nunggu nang ngarep gapura labirin gaib. Katon mbingungake banget dalane.",
+        intanPose: "/src/girlPoses/cewek_khawatir_nobg.png" // Atau gunakan pose Bapak jika ada
+      },
+      {
+        text: "Tugasmu saiki nggoleki dalan metu sing bener. Terus pilih dalan sing ana tulisane 'Pitik' ngganggo sandhangan wulu! Aja nganti kleru!",
+        intanPose: "/src/girlPoses/cewek_nantang_nobg.png"
+      }
+    ],
+
+    sidebarState: {
+      idle: {
+        text: "Ayo, golek dalan sing unine 'Pitik'! Geser-geser nggunakake tombol panah ngisor kuwi.",
+        intanPose: "/src/girlPoses/cewek_ramah_nobg.png",
+        imgCustomClass: "scale-[1.6] origin-bottom -translate-x-2"
+      },
+      success: {
+        text: "Bener banget! Kuwi sandhangan sing pas. Lanjut terus menyang dalan metu!",
+        intanPose: "/src/girlPoses/cewek_heroic_nobg.png"
+      },
+      error: {
+        text: "Waduh salah! Iku dudu 'Pitik'. Balik nang posisi awal. Eling-eling wujude aksarane, ayo baleni!",
+        intanPose: "/src/girlPoses/cewek_nantang_nobg.png",
+        imgCustomClass: "scale-[1.3] origin-bottom -translate-x-2"
+      },
+      hint: {
+        text: "Bocorane: Pilih jalur sing ana sandhangan Wulu (i) nang dhuwur aksara!",
+        intanPose: "/src/girlPoses/cewek_ramah_nobg.png",
+        imgCustomClass: "scale-[1.6] origin-bottom -translate-x-2"
+      }
+    },
+    
+    // DATA SPESIFIK LABIRIN
+    gameData: {
+      mazeSize: 25, // Ukuran labirin (angka ganjil direkomendasikan)
+      correctWord: "ꦥꦶꦠꦶꦏ꧀", // Contoh: "Pitik"
+      wrongWords: [
+        "ꦧꦥꦏ꧀",  // Bapak
+        "ꦩꦤꦸꦏ꧀",  // Manuk
+        "ꦏꦺꦛꦺꦏ꧀", // Kethek
+        "ꦏꦺꦴꦢꦺꦴꦏ꧀"  // Kodok
+      ]
     }
   },
 };
