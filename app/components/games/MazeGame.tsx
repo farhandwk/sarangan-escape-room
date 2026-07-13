@@ -157,7 +157,18 @@ const MazeGame = forwardRef(({ data, onResult, onComplete }: MazeGameProps, ref)
               
               {/* Render Pemain */}
               {player.x === x && player.y === y && (
-                <div className="w-3/4 h-3/4 bg-[#5A189A] rounded-full shadow-[0_0_15px_rgba(90,24,154,0.8)] border-2 border-white z-20 transition-all duration-200" />
+                <div className="relative w-full h-full z-20 flex items-center justify-center pointer-events-none">
+                  {/* Efek cahaya lentera di bawah karakter */}
+                  <div className="absolute w-3/4 h-3/4 bg-[#FFB703]/30 rounded-full blur-md animate-pulse" />
+                  
+                  {/* Gambar Karakter */}
+                  <img 
+                    src="/src/mazeChar.png" 
+                    alt="Player" 
+                    className="absolute w-[120%] h-[120%] object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] animate-[bounce_1s_infinite]" 
+                    style={{ bottom: '10%' }} // Mengangkat karakter sedikit agar tidak tenggelam di lantai
+                  />
+                </div>
               )}
 
               {/* Render Pintu Keluar (Visual Bintang/Goal) */}
