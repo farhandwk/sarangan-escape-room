@@ -186,12 +186,12 @@ export default function ReusableLevelPage() {
           </div>
         </section>
 
-        <section className="relative z-10 flex-1 h-full flex items-center justify-center p-8">
+        <section className="relative z-10 flex-1 h-full flex items-center justify-center p-2 sm:p-4 lg:p-8">
           {isGameStarted && (
-            <div className="absolute top-6 right-8 flex gap-4 pointer-events-none z-30">
-               <div className="bg-[#5A189A]/90 backdrop-blur-sm text-white px-6 py-2 rounded-full font-black shadow-lg border-2 border-[#FFB703]">
+            <div className="absolute top-2 right-4 sm:top-6 sm:right-8 flex gap-4 pointer-events-none z-30 scale-75 sm:scale-100 origin-top-right">
+               {/* <div className="bg-[#5A189A]/90 backdrop-blur-sm text-white px-6 py-2 rounded-full font-black shadow-lg border-2 border-[#FFB703]">
                  KODE: {[ "1", "2", "3", "4" ].map((lvlId) => collectedCodes[lvlId] || "??").join(" - ")}
-               </div>
+               </div> */}
             </div>
           )}
           <div className="w-full h-full flex items-center justify-center animate-in zoom-in fade-in duration-500 delay-300">

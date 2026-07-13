@@ -117,7 +117,7 @@ const MazeGame = forwardRef(({ data, onResult, onComplete }: MazeGameProps, ref)
   if (maze.length === 0) return <div className="text-white font-bold animate-pulse">Menyiapkan Jalur Gaib...</div>;
 
   return (
-    <div className="relative w-full max-w-2xl aspect-square bg-[#1B4332] rounded-3xl shadow-[0_0_30px_rgba(0,0,0,0.5)] overflow-hidden border-4 border-[#FFB703]">
+    <div className="relative h-[85%] sm:h-[100%] w-[100%] bg-[#1B4332] rounded-2xl sm:rounded-3xl shadow-[0_0_30px_rgba(0,0,0,0.5)] overflow-hidden border-2 sm:border-4 border-[#FFB703] mx-auto">
       
       {/* ==========================================
           KAMERA LABIRIN (Bergerak mengikuti pemain)
@@ -183,23 +183,20 @@ const MazeGame = forwardRef(({ data, onResult, onComplete }: MazeGameProps, ref)
       {/* ==========================================
           VIRTUAL D-PAD (Lebih minimalis & elegan)
       ========================================== */}
-      <div className="absolute bottom-4 right-4 grid grid-cols-3 gap-2 z-50">
+      {/* PERUBAHAN 2: Margin diperkecil (bottom-2 right-2) dan ukuran tombol disesuaikan (w-10 h-10) untuk HP */}
+      <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 grid grid-cols-3 gap-1 sm:gap-2 z-50">
         <div />
-        <button onClick={() => movePlayer(0, -1)} className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
-           {/* SVG Panah Atas */}
+        <button onClick={() => movePlayer(0, -1)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
         </button>
         <div />
-        <button onClick={() => movePlayer(-1, 0)} className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
-           {/* SVG Panah Kiri */}
+        <button onClick={() => movePlayer(-1, 0)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         </button>
-        <button onClick={() => movePlayer(0, 1)} className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
-           {/* SVG Panah Bawah */}
+        <button onClick={() => movePlayer(0, 1)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
         </button>
-        <button onClick={() => movePlayer(1, 0)} className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
-           {/* SVG Panah Kanan */}
+        <button onClick={() => movePlayer(1, 0)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
       </div>
