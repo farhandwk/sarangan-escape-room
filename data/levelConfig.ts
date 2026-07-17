@@ -148,12 +148,12 @@ export const levelConfig: Record<string, LevelData> = {
     // DATA SPESIFIK LABIRIN
     gameData: {
       mazeSize: 25, // Ukuran labirin (angka ganjil direkomendasikan)
-      correctWord: "ꦥꦶꦠꦶꦏ꧀", // Contoh: "Pitik"
+      correctWord: "ꦥꦶꦠꦶꦏ꧀", 
       wrongWords: [
-        "ꦧꦥꦏ꧀",  // Bapak
-        "ꦩꦤꦸꦏ꧀",  // Manuk
-        "ꦏꦺꦛꦺꦏ꧀", // Kethek
-        "ꦏꦺꦴꦢꦺꦴꦏ꧀"  // Kodok
+        "ꦧꦥꦏ꧀", 
+        "ꦩꦤꦸꦏ꧀",
+        "ꦏꦺꦛꦺꦏ꧀", 
+        "ꦏꦺꦴꦢꦺꦴꦏ꧀" 
       ]
     }
   },

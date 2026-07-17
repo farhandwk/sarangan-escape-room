@@ -4,17 +4,15 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import Image from "next/image";
 
-// PERUBAHAN 1: Struktur Kartu Diperbarui agar bisa menampung tipe berbeda (Aksara vs Latin)
 export interface CardItem {
-  id: string;         // ID unik untuk render react (key)
-  pairId: number;     // Kunci pencocokan pasangan (misal: "ha" harus sama dengan "ha")
-  type: "aksara" | "latin"; // Penentu wujud kartu
-  content: string;    // Isi teksnya (Karakter Aksara Jawa ATAU teks Latin)
+  id: string;
+  pairId: number;
+  type: "aksara" | "latin";
+  content: string;
   isFlipped: boolean;
   isMatched: boolean;
 }
 
-// PERUBAHAN 2: Menerima data pool Aksara dari levelConfig
 interface MemoryGameProps {
   data: {
     pairsToFind: number;
@@ -26,18 +24,44 @@ interface MemoryGameProps {
 
 const MemoryGame = forwardRef(({ data, onResult, onComplete }: MemoryGameProps, ref) => {
   // --- STATE MANAGEMENT ---
+  const [isPreviewing, setIsPreviewing] = useState(true); // Untuk mengunci klik pemain
+  const [isFlippedForPreview, setIsFlippedForPreview] = useState(false); // KHUSUS pemicu animasi CSS
   const [cards, setCards] = useState<CardItem[]>([]);
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [isLocked, setIsLocked] = useState(false);
   const [isWon, setIsWon] = useState(false);
 
-  // PELACAK METRIK PENILAIAN (TETAP UTUH)
+  // PELACAK METRIK PENILAIAN
   const [clickCount, setClickCount] = useState(0);
   const [hintCount, setHintCount] = useState(0);
   const startTimeRef = useRef<number | null>(null);
 
   // ==========================================
-  // EXPOSE FUNGSI PETUNJUK KE INDUK (TETAP UTUH)
+  // TAHAP 1: TIMER ANIMASI PREVIEW (DIPERBARUI)
+  // ==========================================
+  useEffect(() => {
+    setIsPreviewing(true); // Langsung kunci permainan dari awal
+
+    // Beri jeda super singkat (100ms) agar kartu tergambar tertutup dulu,
+    // baru paksa terbuka. Ini akan memicu animasi berputarnya!
+    const openTimer = setTimeout(() => {
+      setIsFlippedForPreview(true);
+    }, 100);
+
+    // Setelah 3 detik, tutup kembali kartunya dan buka gembok klik
+    const closeTimer = setTimeout(() => {
+      setIsFlippedForPreview(false);
+      setIsPreviewing(false); 
+    }, 3100);
+
+    return () => {
+      clearTimeout(openTimer);
+      clearTimeout(closeTimer);
+    };
+  }, []);
+
+  // ==========================================
+  // EXPOSE FUNGSI PETUNJUK KE INDUK
   // ==========================================
   useImperativeHandle(ref, () => ({
     triggerHint() {
@@ -73,33 +97,27 @@ const MemoryGame = forwardRef(({ data, onResult, onComplete }: MemoryGameProps, 
   }));
 
   // ==========================================
-  // TAHAP 2: SHUFFLE ENGINE (DIPERBARUI)
+  // TAHAP 2: SHUFFLE ENGINE
   // ==========================================
   useEffect(() => {
     if (!data.pool || data.pool.length === 0) return;
 
-    // 1. Acak seluruh Bank Aksara yang dikirim dari levelConfig
     const shuffledPool = [...data.pool].sort(() => Math.random() - 0.5);
-    
-    // 2. Potong sesuai jumlah pasangan yang diminta (misal: 3)
     const selectedPairs = shuffledPool.slice(0, data.pairsToFind);
 
-    // 3. Buat 2 buah kartu berbeda untuk tiap 1 data Aksara
     const generatedCards: CardItem[] = [];
     selectedPairs.forEach((item, index) => {
-      // Kartu 1: Wujud Aksara Jawa (Font)
       generatedCards.push({
         id: `${item.id}-aksara-${index}`,
-        pairId: item.id, // Kunci Cocok
+        pairId: item.id,
         type: "aksara",
         content: item.aksaraChar,
         isFlipped: false,
         isMatched: false,
       });
-      // Kartu 2: Wujud Teks Latin
       generatedCards.push({
         id: `${item.id}-latin-${index}`,
-        pairId: item.id, // Kunci Cocok
+        pairId: item.id,
         type: "latin",
         content: item.latin,
         isFlipped: false,
@@ -107,14 +125,12 @@ const MemoryGame = forwardRef(({ data, onResult, onComplete }: MemoryGameProps, 
       });
     });
 
-    // 4. Acak posisi akhir kartu di atas meja bermain
     const finalShuffledCards = generatedCards.sort(() => Math.random() - 0.5);
-
     setCards(finalShuffledCards);
   }, [data.pool, data.pairsToFind]);
 
   // ==========================================
-  // TAHAP 3: LOGIKA GAME LOOP (DIPERBARUI)
+  // TAHAP 3: LOGIKA GAME LOOP
   // ==========================================
   useEffect(() => {
     if (flippedIndices.length === 2) {
@@ -123,7 +139,6 @@ const MemoryGame = forwardRef(({ data, onResult, onComplete }: MemoryGameProps, 
       const index1 = flippedIndices[0];
       const index2 = flippedIndices[1];
 
-      // LOGIKA KUNCI: Sekarang mencocokkan 'pairId', BUKAN 'value' yang sama
       if (cards[index1].pairId === cards[index2].pairId) {
         setCards((prev) =>
           prev.map((card, i) =>
@@ -149,7 +164,7 @@ const MemoryGame = forwardRef(({ data, onResult, onComplete }: MemoryGameProps, 
   }, [flippedIndices, cards, onResult]);
 
   // ==========================================
-  // TAHAP 4: KONDISI MENANG (TETAP UTUH 100%)
+  // TAHAP 4: KONDISI MENANG
   // ==========================================
   useEffect(() => {
     const matchedPairs = cards.filter((c) => c.isMatched).length / 2;
@@ -181,9 +196,10 @@ const MemoryGame = forwardRef(({ data, onResult, onComplete }: MemoryGameProps, 
   }, [cards, data.pairsToFind, onComplete, isWon, clickCount, hintCount]);
 
   // ==========================================
-  // HANDLER KLIK KARTU (TETAP UTUH)
+  // HANDLER KLIK KARTU
   // ==========================================
   const handleCardClick = (index: number) => {
+    if (isPreviewing) return; // Dicegah oleh state isPreviewing
     if (isLocked || cards[index].isFlipped || cards[index].isMatched) return;
 
     if (startTimeRef.current === null) {
@@ -211,23 +227,22 @@ const MemoryGame = forwardRef(({ data, onResult, onComplete }: MemoryGameProps, 
           >
             <div 
               className="w-full h-full duration-500 [transform-style:preserve-3d] shadow-2xl rounded-xl"
-              style={{ transform: card.isFlipped || card.isMatched ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+              // PERUBAHAN DI SINI: Animasi CSS sekarang mengandalkan isFlippedForPreview
+              style={{ transform: card.isFlipped || card.isMatched || isFlippedForPreview ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
             >
-              {/* SISI DEPAN (Tertutup) - TETAP UTUH */}
+              {/* SISI DEPAN (Tertutup) */}
               <div className="absolute inset-0 w-full h-full rounded-xl flex items-center justify-center [backface-visibility:hidden] overflow-hidden bg-black/20">
                  <Image src="/src/backCard.png" alt="Card Back" fill className="object-contain p-1 rounded-xl border-2 border-white/20" />
               </div>
 
-              {/* SISI BELAKANG (Terbuka) - LOGIKA FONT DINAMIS */}
+              {/* SISI BELAKANG (Terbuka) */}
               <div className="absolute inset-0 w-full h-full rounded-xl border-[3px] border-[rgb(90,24,154)] bg-white flex items-center justify-center [backface-visibility:hidden] [transform:rotateY(180deg)] overflow-hidden shadow-inner p-2">
                  
                  {card.type === "aksara" ? (
-                   // HASIL DARI UITEST: Aksara dengan font-bold dan whitespace-nowrap
                    <span className="text-3xl md:text-5xl font-bold text-[#5A189A] drop-shadow-sm text-center whitespace-nowrap">
                      {card.content}
                    </span>
                  ) : (
-                   // HASIL DARI UITEST: Latin dengan whitespace-nowrap
                    <span className="text-base md:text-2xl font-black text-[#5A189A] capitalize drop-shadow-sm text-center whitespace-nowrap">
                      {card.content}
                    </span>

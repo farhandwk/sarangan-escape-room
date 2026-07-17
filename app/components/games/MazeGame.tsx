@@ -150,9 +150,21 @@ const MazeGame = forwardRef(({ data, onResult, onComplete }: MazeGameProps, ref)
             >
               {/* Render Item / Kata */}
               {items.find(i => i.x === x && i.y === y) && (
-                 <span className="text-sm md:text-base font-extrabold text-[#5A189A] drop-shadow-md z-10 whitespace-nowrap">
-                   {items.find(i => i.x === x && i.y === y)?.aksara}
-                 </span>
+                // 1. Tambahkan 'absolute' dan 'z-40' agar mengambang di atas semua tembok dan lantai
+                // 2. Gunakan transform agar posisinya tepat di tengah persimpangan
+                <div className="absolute z-40 flex items-center justify-center transform scale-110 sm:scale-125">
+                  
+                  {/* 3. Kita beri "Papan Nama" (Badge) putih agar kontras dengan labirin yang gelap */}
+                  <div className="bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-[#5A189A] shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+                    
+                    {/* 4. Perbesar ukuran font menjadi text-xl atau text-2xl */}
+                    <span className="text-md font-extrabold text-[#5A189A] whitespace-nowrap tracking-wide leading-none block">
+                      {items.find(i => i.x === x && i.y === y)?.aksara}
+                    </span>
+                    
+                  </div>
+                  
+                </div>
               )}
               
               {/* Render Pemain */}
@@ -186,8 +198,8 @@ const MazeGame = forwardRef(({ data, onResult, onComplete }: MazeGameProps, ref)
       <div 
         className={`absolute inset-0 pointer-events-none z-30 transition-opacity duration-1000 ease-in-out ${isFogActive ? 'opacity-100' : 'opacity-0'}`}
         style={{
-           // Lubang pandangan di tengah
-           background: 'radial-gradient(circle at 50% 50%, transparent 60px, rgba(8, 28, 21, 0.98) 180px)'
+           // Jarak pandang dipersempit (40px) dan langsung gelap total di jarak 100px dengan kepekatan 100% (1.0)
+           background: 'radial-gradient(circle at 50% 50%, transparent 40px, rgba(8, 28, 21, 1.0) 100px)'
         }}
       />
 
