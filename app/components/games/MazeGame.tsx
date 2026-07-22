@@ -2,110 +2,119 @@
 "use client";
 
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
-import { generateMaze, populateItems, Position, MazeItem } from "@/lib/mazeUtils"; // Pastikan path ini sesuai dengan lokasi file utils Anda
+import { generateMaze, populateItems, Position, MazeItem } from "@/lib/mazeUtils"; 
 
 interface MazeGameProps {
   data: {
     mazeSize: number;
-    correctWord: string;
+    correctSequence: string[]; // <-- BERUBAH MENJADI ARRAY
     wrongWords: string[];
   };
   onResult: (isCorrect: boolean, msg?: string) => void;
   onComplete: (generatedCode: string, score: number) => void;
+  onTargetChange: (newIndex: number) => void; // <-- TAMBAHAN KOMUNIKASI SOAL
 }
 
-const MazeGame = forwardRef(({ data, onResult, onComplete }: MazeGameProps, ref) => {
-  const CELL_SIZE = 45; // Ukuran kotak labirin
-  const { mazeSize, correctWord, wrongWords } = data;
+const MazeGame = forwardRef(({ data, onResult, onComplete, onTargetChange }: MazeGameProps, ref) => {
+  const [CELL_SIZE, setCELL_SIZE] = useState(45);
+  const { mazeSize, correctSequence, wrongWords } = data;
 
-  // --- STATE MANAGEMENT ---
   const [maze, setMaze] = useState<number[][]>([]);
   const [items, setItems] = useState<MazeItem[]>([]);
   const [player, setPlayer] = useState<Position>({ x: 1, y: 1 });
   const [isLocked, setIsLocked] = useState(false);
   const [isWon, setIsWon] = useState(false);
   
-  // State Khusus Labirin
-  const [isFogActive, setIsFogActive] = useState(true); // Kabut menyala dari awal
+  const [isFogActive, setIsFogActive] = useState(true); 
   const [score, setScore] = useState(1000);
   const [moveCount, setMoveCount] = useState(0);
 
-  // ==========================================
-  // EXPOSE FUNGSI PETUNJUK KE INDUK
-  // ==========================================
+  // <-- STATE BARU: Pelacak Progres Soal Berurutan
+  const [visitedCorrect, setVisitedCorrect] = useState<Set<string>>(new Set());
+  const [currentQIndex, setCurrentQIndex] = useState(0);
+
+  // Ukuran Responsif
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setCELL_SIZE(85);
+      else if (window.innerWidth >= 768) setCELL_SIZE(65);
+      else setCELL_SIZE(45);
+    };
+    handleResize(); 
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useImperativeHandle(ref, () => ({
     triggerHint() {
       if (isWon || isLocked || !isFogActive) return;
-
-      // Hukuman skor karena memakai hint
       setScore((prev) => Math.max(0, prev - 100));
-
-      // Buka kabut selama 3 detik
       setIsFogActive(false);
-      setTimeout(() => {
-        setIsFogActive(true);
-      }, 3000);
+      setTimeout(() => { setIsFogActive(true); }, 3000);
     }
   }));
 
-  // ==========================================
-  // GENERATE LABIRIN SAAT KOMPONEN DIMUAT
-  // ==========================================
   useEffect(() => {
-    if (!mazeSize) return;
+    if (!mazeSize || !correctSequence || correctSequence.length === 0) return;
     const newMaze = generateMaze(mazeSize);
     setMaze(newMaze);
-    // Masukkan parameter dinamis dari data config ke fungsi populateItems
-    setItems(populateItems(newMaze, mazeSize, correctWord, wrongWords));
-  }, [mazeSize, correctWord, wrongWords]);
+    setItems(populateItems(newMaze, mazeSize, correctSequence, wrongWords));
+    
+    // Reset status setiap kali labirin digenerate ulang
+    setVisitedCorrect(new Set());
+    setCurrentQIndex(0);
+  }, [mazeSize, correctSequence, wrongWords]);
 
-  // ==========================================
-  // LOGIKA PERGERAKAN PEMAIN
-  // ==========================================
   const movePlayer = (dx: number, dy: number) => {
     if (isWon || isLocked || maze.length === 0) return;
 
     const newX = player.x + dx;
     const newY = player.y + dy;
 
-    // Cek tabrakan dengan tembok (1)
     if (maze[newY][newX] === 1) return;
 
     setMoveCount((prev) => prev + 1);
 
-    // Cek apakah pemain menginjak kata (item)
     const steppedItem = items.find(i => i.x === newX && i.y === newY);
     
     if (steppedItem) {
       if (steppedItem.isCorrect) {
-        onResult(true);
+        // JIKA MENGINJAK SOAL BENAR
+        const posKey = `${newX},${newY}`;
+        // Pastikan belum pernah diinjak sebelumnya (biar ga curang mundur)
+        if (!visitedCorrect.has(posKey)) {
+          setVisitedCorrect((prev) => new Set(prev).add(posKey));
+          const nextIndex = currentQIndex + 1;
+          setCurrentQIndex(nextIndex);
+          onTargetChange(nextIndex); // <--- KASIH TAU INTAN GANTI SOAL!
+          onResult(true);
+        }
       } else {
         // JIKA MENGINJAK JEBAKAN
         setIsLocked(true);
         onResult(false);
-        setScore((prev) => Math.max(0, prev - 50)); // Penalti salah jalan
+        setScore((prev) => Math.max(0, prev - 50)); 
         
-        // Kembalikan ke titik awal setelah Intan marah (1.5 detik)
+        // <--- HUKUMAN: KEMBALI KE SOAL NOMOR 1
+        setVisitedCorrect(new Set());
+        setCurrentQIndex(0);
+        onTargetChange(0); // Intan ngomong soal pertama lagi
+
         setTimeout(() => {
-          setPlayer({ x: 1, y: 1 }); 
+          setPlayer({ x: 1, y: 1 }); // Tampar balik ke start
           setIsLocked(false);
         }, 1500);
         return; 
       }
     }
 
-    // Pindahkan pemain jika aman
     setPlayer({ x: newX, y: newY });
 
-    // Cek Kondisi Menang (Sampai di pojok kanan bawah)
     if (newX === mazeSize - 2 && newY === mazeSize - 2) {
       setIsWon(true);
       setIsLocked(true);
-      
-      // Kalkulasi Skor Akhir
-      const penalty = moveCount * 2; // Makin banyak jalan, makin berkurang dikit
+      const penalty = moveCount * 2; 
       const finalScore = Math.max(100, score - penalty);
-      
       setTimeout(() => {
         const randomCode = Math.random().toString(36).substring(2, 4).toUpperCase();
         onComplete(randomCode, finalScore);
@@ -113,31 +122,22 @@ const MazeGame = forwardRef(({ data, onResult, onComplete }: MazeGameProps, ref)
     }
   };
 
-  // Mencegah render sebelum maze siap
   if (maze.length === 0) return <div className="text-white font-bold animate-pulse">Menyiapkan Jalur Gaib...</div>;
 
   return (
-    <div className="relative h-[85%] sm:h-[100%] w-[100%] bg-[#1B4332] rounded-2xl sm:rounded-3xl shadow-[0_0_30px_rgba(0,0,0,0.5)] overflow-hidden border-2 sm:border-4 border-[#FFB703] mx-auto">
-      
-      {/* ==========================================
-          KAMERA LABIRIN (Bergerak mengikuti pemain)
-      ========================================== */}
+    <div className="relative h-[85%] sm:h-[90%] w-auto aspect-square bg-[#1B4332] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border-2 sm:border-4 border-[#FFB703] mx-auto">
       <div 
         className="absolute transition-transform duration-300 ease-out"
         style={{
-          left: '50%',
-          top: '50%',
+          left: '50%', top: '50%',
           transform: `translate(-${(player.x * CELL_SIZE) + (CELL_SIZE / 2)}px, -${(player.y * CELL_SIZE) + (CELL_SIZE / 2)}px)`,
-          width: `${mazeSize * CELL_SIZE}px`,
-          height: `${mazeSize * CELL_SIZE}px`,
+          width: `${mazeSize * CELL_SIZE}px`, height: `${mazeSize * CELL_SIZE}px`,
         }}
       >
         <div 
           className="w-full h-full"
           style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${mazeSize}, ${CELL_SIZE}px)`,
-            gridTemplateRows: `repeat(${mazeSize}, ${CELL_SIZE}px)`,
+            display: 'grid', gridTemplateColumns: `repeat(${mazeSize}, ${CELL_SIZE}px)`, gridTemplateRows: `repeat(${mazeSize}, ${CELL_SIZE}px)`,
           }}
         >
           {maze.map((row, y) => row.map((cell, x) => (
@@ -148,42 +148,23 @@ const MazeGame = forwardRef(({ data, onResult, onComplete }: MazeGameProps, ref)
                 ${x === mazeSize - 2 && y === mazeSize - 2 ? 'bg-[#FFB703] animate-pulse border-4 border-white' : ''}
               `}
             >
-              {/* Render Item / Kata */}
               {items.find(i => i.x === x && i.y === y) && (
-                // 1. Tambahkan 'absolute' dan 'z-40' agar mengambang di atas semua tembok dan lantai
-                // 2. Gunakan transform agar posisinya tepat di tengah persimpangan
                 <div className="absolute z-40 flex items-center justify-center transform scale-110 sm:scale-125">
-                  
-                  {/* 3. Kita beri "Papan Nama" (Badge) putih agar kontras dengan labirin yang gelap */}
-                  <div className="bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-[#5A189A] shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
-                    
-                    {/* 4. Perbesar ukuran font menjadi text-xl atau text-2xl */}
-                    <span className="text-md font-extrabold text-[#5A189A] whitespace-nowrap tracking-wide leading-none block">
+                  <div className="bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full border-2 border-[#5A189A] shadow-[0_4px_10px_rgba(0,0,0,0.5)]">
+                    <span className="text-xl sm:text-2xl font-extrabold text-[#5A189A] whitespace-nowrap tracking-wide leading-none block">
                       {items.find(i => i.x === x && i.y === y)?.aksara}
                     </span>
-                    
                   </div>
-                  
                 </div>
               )}
               
-              {/* Render Pemain */}
               {player.x === x && player.y === y && (
                 <div className="relative w-full h-full z-20 flex items-center justify-center pointer-events-none">
-                  {/* Efek cahaya lentera di bawah karakter */}
                   <div className="absolute w-3/4 h-3/4 bg-[#FFB703]/30 rounded-full blur-md animate-pulse" />
-                  
-                  {/* Gambar Karakter */}
-                  <img 
-                    src="/src/mazeChar.png" 
-                    alt="Player" 
-                    className="absolute w-[120%] h-[120%] object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] animate-[bounce_1s_infinite]" 
-                    style={{ bottom: '10%' }} // Mengangkat karakter sedikit agar tidak tenggelam di lantai
-                  />
+                  <img src="/src/mazeChar.png" alt="Player" className="absolute w-[120%] h-[120%] object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] animate-[bounce_1s_infinite]" style={{ bottom: '10%' }} />
                 </div>
               )}
 
-              {/* Render Pintu Keluar (Visual Bintang/Goal) */}
               {x === mazeSize - 2 && y === mazeSize - 2 && (
                 <span className="text-2xl z-10 animate-bounce">🚪</span>
               )}
@@ -192,36 +173,17 @@ const MazeGame = forwardRef(({ data, onResult, onComplete }: MazeGameProps, ref)
         </div>
       </div>
 
-      {/* ==========================================
-          EFEK KABUT (FOG OF WAR)
-      ========================================== */}
-      <div 
-        className={`absolute inset-0 pointer-events-none z-30 transition-opacity duration-1000 ease-in-out ${isFogActive ? 'opacity-100' : 'opacity-0'}`}
-        style={{
-           // Jarak pandang dipersempit (40px) dan langsung gelap total di jarak 100px dengan kepekatan 100% (1.0)
-           background: 'radial-gradient(circle at 50% 50%, transparent 40px, rgba(8, 28, 21, 1.0) 100px)'
-        }}
+      <div className={`absolute inset-0 pointer-events-none z-30 transition-opacity duration-1000 ease-in-out ${isFogActive ? 'opacity-100' : 'opacity-0'}`}
+        style={{ background: `radial-gradient(circle at 50% 50%, transparent ${CELL_SIZE * 0.9}px, rgba(8, 28, 21, 1.0) ${CELL_SIZE * 2.5}px)` }}
       />
 
-      {/* ==========================================
-          VIRTUAL D-PAD (Lebih minimalis & elegan)
-      ========================================== */}
-      {/* PERUBAHAN 2: Margin diperkecil (bottom-2 right-2) dan ukuran tombol disesuaikan (w-10 h-10) untuk HP */}
       <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 grid grid-cols-3 gap-1 sm:gap-2 z-50">
         <div />
-        <button onClick={() => movePlayer(0, -1)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
-           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-        </button>
+        <button onClick={() => movePlayer(0, -1)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
         <div />
-        <button onClick={() => movePlayer(-1, 0)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
-           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </button>
-        <button onClick={() => movePlayer(0, 1)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
-           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-        </button>
-        <button onClick={() => movePlayer(1, 0)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all">
-           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button>
+        <button onClick={() => movePlayer(-1, 0)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+        <button onClick={() => movePlayer(0, 1)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></button>
+        <button onClick={() => movePlayer(1, 0)} className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-lg active:bg-white/40 active:scale-90 border border-white/50 transition-all"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
       </div>
     </div>
   );

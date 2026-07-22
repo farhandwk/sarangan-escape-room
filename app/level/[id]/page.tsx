@@ -9,7 +9,8 @@ import { useGameStore } from "@/store/useGameStore";
 
 // Komponen Game
 import MemoryGame from "@/app/components/games/MemoryGame";
-import MazeGame from "@/app/components/games/MazeGame"; // <-- INJEKSI IMPORT BARU
+import MazeGame from "@/app/components/games/MazeGame";
+import AssembleGame from "@/app/components/games/AssembleGame";
 
 export default function ReusableLevelPage() {
   const router = useRouter();
@@ -52,6 +53,30 @@ export default function ReusableLevelPage() {
   const sidebarTimerRef = useRef<NodeJS.Timeout | null>(null);
   const gameRef = useRef<any>(null);
 
+  // STATE KHUSUS LEVEL 2 (MAZE)
+  const [mazeSequence, setMazeSequence] = useState<any[]>([]); 
+  const [mazeCorrectAksaras, setMazeCorrectAksaras] = useState<string[]>([]); // <--- STATE BARU INI
+  const [mazeWrongWords, setMazeWrongWords] = useState<string[]>([]);
+  const [currentTargetLatin, setCurrentTargetLatin] = useState<string>("");
+
+  // LOGIKA KHUSUS LEVEL 2: PENGACAKAN BANK SOAL
+  useEffect(() => {
+    if (currentLevel?.gameType === "maze" && currentLevel.gameData.pool) {
+      const pool = [...currentLevel.gameData.pool].sort(() => Math.random() - 0.5);
+      
+      const selectedSequence = pool.slice(0, 5);
+      setMazeSequence(selectedSequence);
+      
+      // <--- TAMBAHKAN BARIS INI: Simpan array string ke state agar tidak berubah-ubah referensinya
+      setMazeCorrectAksaras(selectedSequence.map((q: any) => q.aksaraChar));
+
+      setCurrentTargetLatin(selectedSequence[0].latin); 
+
+      const wrongAksaras = pool.slice(5).map((item: any) => item.aksaraChar);
+      setMazeWrongWords(wrongAksaras);
+    }
+  }, [currentLevel]);
+
   if (!isAuthorized || !currentLevel || !idStr) {
     return <div className="flex items-center justify-center h-[100svh] w-screen bg-black text-white">Memuat...</div>;
   }
@@ -61,6 +86,16 @@ export default function ReusableLevelPage() {
   const activeSidebarData = !isGameStarted 
     ? currentLevel.introSequence?.[introIndex] || { text: "Data intro belum ada...", intanPose: defaultIntan }
     : currentLevel.sidebarState?.[gameState] || { text: "Data state belum ada...", intanPose: defaultIntan };
+
+  // FUNGSI PARSER UNTUK LEVEL 2
+  const parseSidebarText = (rawText: string) => {
+    if (!rawText) return "";
+    // Menggunakan currentTargetLatin yang akan terus berubah
+    if (currentLevel?.gameType === "maze" && currentTargetLatin) {
+      return rawText.replace(/{TARGET_WORD}/g, currentTargetLatin);
+    }
+    return rawText; 
+  };
 
   const handleSidebarButton = () => {
     if (!isGameStarted) {
@@ -76,7 +111,7 @@ export default function ReusableLevelPage() {
       if (sidebarTimerRef.current) clearTimeout(sidebarTimerRef.current);
       sidebarTimerRef.current = setTimeout(() => {
         setGameState("idle");
-      }, 2500);
+      }, 2500); // Sinkron dengan durasi kabut 2.5 detik
     }
   };
 
@@ -86,6 +121,19 @@ export default function ReusableLevelPage() {
       case "success": return "bg-[#D8F3DC] border-[#95D5B2]";
       case "error": return "bg-[#FFD6D6] border-[#FFADAD]";
       default: return "bg-[#EDF2F4] border-white/50";
+    }
+  };
+
+  const getSidebarWidth = () => {
+    if (!currentLevel) return "w-[40%] max-w-md"; // Default fallback
+    
+    switch (currentLevel.gameType) {
+      case "assemble":
+        // Sidebar lebih ramping untuk Level 3 agar area puzzle lebih lega
+        return "w-[30%] max-w-sm"; 
+      default:
+        // Ukuran standar untuk Level 1 (Memory) dan Level 2 (Maze)
+        return "w-[40%] max-w-md"; 
     }
   };
 
@@ -118,9 +166,34 @@ export default function ReusableLevelPage() {
             }}
         />;
 
-      case "maze": // <-- INJEKSI LOGIKA MAZE BARU
+      case "maze": 
+        if (mazeSequence.length === 0) return null; 
         return <MazeGame 
             ref={gameRef} 
+            data={{
+              mazeSize: currentLevel.gameData.mazeSize,
+              // <--- UBAH BARIS INI: Gunakan state, JANGAN gunakan mazeSequence.map() di sini!
+              correctSequence: mazeCorrectAksaras, 
+              wrongWords: mazeWrongWords
+            }}
+            onTargetChange={(newIndex: number) => {
+              if (mazeSequence.length > 0) {
+                 setCurrentTargetLatin(mazeSequence[newIndex % mazeSequence.length].latin);
+              }
+            }}
+            onResult={handleGameResult}
+            onComplete={(code, score) => {
+              setVictoryCode(code);
+              setLevelScore(score); 
+              addCollectedCode(idStr, code);
+              saveLevelScore(idStr, score);
+              unlockNextLevel(Number(idStr));
+            }}
+        />;
+
+        case "assemble":
+        return <AssembleGame 
+            ref={gameRef}
             data={currentLevel.gameData}
             onResult={handleGameResult}
             onComplete={(code, score) => {
@@ -157,11 +230,12 @@ export default function ReusableLevelPage() {
           <Image src={currentLevel.bgImage} alt="bg" fill className="object-cover blur-[2px] brightness-75" priority />
         </div>
 
-        <section className={`relative z-20 w-[40%] max-w-md h-full p-4 sm:p-6 flex flex-col justify-between transition-all duration-500 rounded-r-[40px] shadow-[10px_0_20px_rgba(0,0,0,0.2)] ${getSidebarStyle()}`}>
+        <section className={`relative z-20 h-full p-4 sm:p-6 flex flex-col justify-between transition-all duration-500 rounded-r-[40px] shadow-[10px_0_20px_rgba(0,0,0,0.2)] ${getSidebarWidth()} ${getSidebarStyle()}`}>
           <div className="relative flex flex-row flex-1 h-full min-h-0 z-10 gap-2 sm:gap-4 mt-2">
             <div className="flex-1 flex items-center justify-start overflow-y-auto pb-2 pr-1">
                <p className="text-[#3D2B1F] font-black text-[13px] sm:text-[15px] leading-snug sm:leading-relaxed">
-                 {activeSidebarData.text}
+                 {/* IMPLEMENTASI PARSER DINAMIS */}
+                 {parseSidebarText(activeSidebarData.text)}
                </p>
             </div>
             <div className="relative w-[45%] h-full flex-shrink-0 flex items-end justify-center">

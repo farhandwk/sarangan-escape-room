@@ -1,5 +1,5 @@
 // src/data/levelConfig.ts
-export type GameType = "memory" | "quiz" | "explorer" | "dragdrop" | "maze";
+export type GameType = "memory" | "quiz" | "explorer" | "assemble" | "maze";
 
 export interface DialogStep {
   text: string;
@@ -102,11 +102,11 @@ export const levelConfig: Record<string, LevelData> = {
   },
   // ... (Data Level 1 sebelumnya) ...
 
-  "2": {
+ "2": {
     id: "2",
     name: "Cemoro Sewu",
     gameType: "maze", 
-    bgImage: "/src/background/sarangan_1_room.png", // Ganti dengan aset latar Pos 2 Anda
+    bgImage: "/src/background/sarangan_1_room.png",
     
     introSequence: [
       {
@@ -115,17 +115,17 @@ export const levelConfig: Record<string, LevelData> = {
       },
       {
         text: "Eh, deloken kae! Bapak wis nunggu nang ngarep gapura labirin gaib. Katon mbingungake banget dalane.",
-        intanPose: "/src/girlPoses/cewek_khawatir_nobg.png" // Atau gunakan pose Bapak jika ada
+        intanPose: "/src/girlPoses/cewek_khawatir_nobg.png"
       },
       {
-        text: "Tugasmu saiki nggoleki dalan metu sing bener. Terus pilih dalan sing ana tulisane 'Pitik' ngganggo sandhangan wulu! Aja nganti kleru!",
+        text: "Tugasmu saiki nggoleki dalan metu sing bener. Pilih dalan sing ana tulisane '{TARGET_WORD}'! Aja nganti kleru!",
         intanPose: "/src/girlPoses/cewek_nantang_nobg.png"
       }
     ],
 
     sidebarState: {
       idle: {
-        text: "Ayo, golek dalan sing unine 'Pitik'! Geser-geser nggunakake tombol panah ngisor kuwi.",
+        text: "Ayo, golek dalan sing unine '{TARGET_WORD}'! Geser-geser nggunakake tombol panah ngisor kuwi.",
         intanPose: "/src/girlPoses/cewek_ramah_nobg.png",
         imgCustomClass: "scale-[1.6] origin-bottom -translate-x-2"
       },
@@ -134,26 +134,102 @@ export const levelConfig: Record<string, LevelData> = {
         intanPose: "/src/girlPoses/cewek_heroic_nobg.png"
       },
       error: {
-        text: "Waduh salah! Iku dudu 'Pitik'. Balik nang posisi awal. Eling-eling wujude aksarane, ayo baleni!",
+        text: "Waduh salah! Iku dudu '{TARGET_WORD}'. Balik nang posisi awal. Eling-eling wujude aksarane, ayo baleni!",
         intanPose: "/src/girlPoses/cewek_nantang_nobg.png",
         imgCustomClass: "scale-[1.3] origin-bottom -translate-x-2"
       },
       hint: {
-        text: "Bocorane: Pilih jalur sing ana sandhangan Wulu (i) nang dhuwur aksara!",
+        // Teks ini muncul sesaat selama 2.5 detik saat tombol petunjuk ditekan (kabut hilang)
+        text: "Kabut gaibe tak ilangi sedela! Gek ndang deloken dalan sing bener kanggo '{TARGET_WORD}'!",
         intanPose: "/src/girlPoses/cewek_ramah_nobg.png",
         imgCustomClass: "scale-[1.6] origin-bottom -translate-x-2"
       }
     },
     
-    // DATA SPESIFIK LABIRIN
+    // ==========================================
+    // BANK SOAL (FORMAT PERSIS LEVEL 1)
+    // ==========================================
     gameData: {
-      mazeSize: 25, // Ukuran labirin (angka ganjil direkomendasikan)
-      correctWord: "ꦥꦶꦠꦶꦏ꧀", 
-      wrongWords: [
-        "ꦧꦥꦏ꧀", 
-        "ꦩꦤꦸꦏ꧀",
-        "ꦏꦺꦛꦺꦏ꧀", 
-        "ꦏꦺꦴꦢꦺꦴꦏ꧀" 
+      mazeSize: 35, 
+      pool: [
+        { id: 1, aksaraChar: "ꦥꦶꦠꦶꦏ꧀", latin: "Pitik" },
+        { id: 2, aksaraChar: "ꦩꦤꦸꦏ꧀", latin: "Manuk" },
+        { id: 3, aksaraChar: "ꦏꦺꦛꦺꦏ꧀", latin: "Kethek" },
+        { id: 4, aksaraChar: "ꦏꦺꦴꦢꦺꦴꦏ꧀", latin: "Kodok" },
+        { id: 5, aksaraChar: "ꦮꦼꦢꦸꦱ꧀", latin: "Wedus" },
+        { id: 6, aksaraChar: "ꦧꦥꦏ꧀", latin: "Bapak" },
+        { id: 7, aksaraChar: "ꦱꦥꦶ", latin: "Sapi" },
+        { id: 8, aksaraChar: "ꦏꦸꦕꦶꦁ", latin: "Kucing" },
+        { id: 9, aksaraChar: "ꦒꦗꦃ", latin: "Gajah" },
+        { id: 10, aksaraChar: "ꦈꦭ", latin: "Ula" }
+      ]
+    }
+  },
+
+  "3": {
+    id: "3",
+    name: "Hutan Mojosemi",
+    gameType: "assemble", 
+    bgImage: "/src/background/sarangan_1_room.png", // Sesuaikan nama file background Hutan Mojosemi
+    
+    introSequence: [
+      {
+        text: "Sugeng rawuh ing Hutan Mojosemi! Hutan iki rada misterius, lho.",
+        intanPose: "/src/girlPoses/cewek_lambai_nobg_edited.png"
+      },
+      {
+        text: "Tugase gampang: aku bakal nyekel barang, terus kowe tebak tembung sing nyambung karo barang kuwi.",
+        intanPose: "/src/girlPoses/cewek_ramah_nobg.png"
+      },
+      {
+        text: "Tapi ati-ati, tebakane kudu disusun nganggo Aksara Jawa lan ana Pasangane. Ayo, asah utekmu lan temokna kabeh kode misterius ing kene!",
+        intanPose: "/src/girlPoses/cewek_heroic_nobg.png",
+        imgCustomClass: "scale-[1.2] origin-bottom"
+      }
+    ],
+
+    sidebarState: {
+      idle: {
+        text: "Ayo, apa sing tok lakoni nganggo barang iki?",
+        intanPose: "/src/assembleObjects/dingklik.png", // Gunakan pose bertanya/menunjuk jika ada
+        imgCustomClass: "scale-[1.5] origin-bottom -translate-x-2"
+      },
+      success: {
+        text: "Wah, bener banget, lanjut soal nomer loro!",
+        intanPose: "/src/girlPoses/cewek_heroic_nobg.png"
+      },
+      error: {
+        text: "Waduh, susunan iki salah, coba baleni maneh!",
+        intanPose: "/src/girlPoses/cewek_khawatir_nobg.png",
+        imgCustomClass: "scale-[1.3] origin-bottom -translate-x-2"
+      },
+      hint: {
+        text: "Iki bocorane! Coba eling-eling maneh wujud pasangane, aja nganti kuwalik!",
+        intanPose: "/src/girlPoses/cewek_ramah_nobg.png",
+        imgCustomClass: "scale-[1.6] origin-bottom -translate-x-2"
+      }
+    },
+    
+    gameData: {
+      // Kita gunakan array 'questions' agar gamenya bisa melooping beberapa soal
+      questions: [
+        {
+          id: 1,
+          imageUrl: "/src/items/dingklik.png", 
+          title: "Mancik Dingklik",
+          words: [
+            { latin: "man", javanese: "ꦩꦤ꧀" },
+            { latin: "cik", javanese: "ꦕꦶꦏ꧀" },
+            { latin: "ding", javanese: "ꦢꦶꦁ" },
+            { latin: "klik", javanese: "ꦏ꧀ꦭꦶꦏ꧀" }
+          ],
+          distractors: [
+            { latin: "me", javanese: "ꦩꦺ" },
+            { latin: "tok", javanese: "ꦠꦺꦴꦏ꧀" },
+            { latin: "ba", javanese: "ꦧ" }
+          ]
+        }
+        // Tambahkan soal kedua, ketiga, dst di sini nanti
       ]
     }
   },
